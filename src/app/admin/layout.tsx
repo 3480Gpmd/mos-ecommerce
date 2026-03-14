@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { LayoutDashboard, Package, ShoppingCart, Users, Upload, FileText, FolderTree, Tag, Settings, LogOut, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Upload, FileText, FolderTree, Tag, Settings, LogOut, ExternalLink, ClipboardList } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const navItems = [
   { href: '/admin/categorie', label: 'Categorie', icon: FolderTree },
   { href: '/admin/prezzi', label: 'Prezzi', icon: Tag },
   { href: '/admin/clienti', label: 'Clienti', icon: Users },
+  { href: '/admin/preventivi', label: 'Preventivi', icon: ClipboardList },
   { href: '/admin/import', label: 'Import CSV', icon: Upload },
   { href: '/admin/easyfatt', label: 'Easyfatt', icon: FileText },
   { href: '/admin/impostazioni', label: 'Impostazioni', icon: Settings },

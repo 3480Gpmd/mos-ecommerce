@@ -1,15 +1,18 @@
 import { db } from '@/db';
-import { orders, customers, products, csvImports } from '@/db/schema';
-import { eq, sql, desc } from 'drizzle-orm';
+import { orders, customers, products, csvImports, customerNotes, quoteRequests } from '@/db/schema';
+import { eq, sql, desc, and, lte } from 'drizzle-orm';
 import Link from 'next/link';
 import {
   Package, Users, ShoppingCart, TrendingUp, Tag, FolderTree,
-  Upload, FileText, Settings, Search, BarChart3,
+  Upload, FileText, Settings, Search, BarChart3, Bell, ClipboardList,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
+  const sevenDaysFromNow = new Date();
+  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
   const [
     orderCount,
     customerCount,
@@ -17,6 +20,8 @@ export default async function AdminDashboard() {
     recentOrders,
     latestImport,
     revenue,
+    upcomingReminders,
+    newQuoteCount,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(orders),
     db.select({ count: sql<number>`count(*)` }).from(customers),
@@ -24,6 +29,19 @@ export default async function AdminDashboard() {
     db.select().from(orders).orderBy(desc(orders.createdAt)).limit(5),
     db.select().from(csvImports).orderBy(desc(csvImports.importedAt)).limit(1),
     db.select({ total: sql<number>`COALESCE(SUM(total::numeric), 0)` }).from(orders).where(eq(orders.paymentStatus, 'paid')),
+    db.select({
+      id: customerNotes.id,
+      content: customerNotes.content,
+      reminderDate: customerNotes.reminderDate,
+      customerId: customerNotes.customerId,
+      customerName: sql<string>`COALESCE(${customers.companyName}, ${customers.firstName} || ' ' || ${customers.lastName})`,
+    })
+      .from(customerNotes)
+      .leftJoin(customers, eq(customerNotes.customerId, customers.id))
+      .where(and(eq(customerNotes.isCompleted, false), lte(customerNotes.reminderDate, sevenDaysFromNow)))
+      .orderBy(customerNotes.reminderDate)
+      .limit(5),
+    db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.status, 'nuovo')),
   ]);
 
   const stats = [
@@ -94,6 +112,14 @@ export default async function AdminDashboard() {
       description: 'Esportare ordini e clienti in formato Easyfatt per la fatturazione.',
       color: 'text-teal-600',
       bg: 'bg-teal-50',
+    },
+    {
+      href: '/admin/preventivi',
+      icon: ClipboardList,
+      title: 'Preventivi',
+      description: `Gestire le richieste di preventivo dal sito.${Number(newQuoteCount[0]?.count || 0) > 0 ? ` (${newQuoteCount[0].count} nuov${Number(newQuoteCount[0].count) === 1 ? 'a' : 'e'})` : ''}`,
+      color: 'text-pink-600',
+      bg: 'bg-pink-50',
     },
     {
       href: '/admin/impostazioni',
@@ -178,6 +204,35 @@ export default async function AdminDashboard() {
             Stato: <span className="font-medium">{latestImport[0].status}</span> &mdash;{' '}
             {latestImport[0].productsNew} nuovi, {latestImport[0].productsUpdated} aggiornati
           </p>
+        </div>
+      )}
+
+      {/* Promemoria in scadenza */}
+      {upcomingReminders.length > 0 && (
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-heading font-bold text-navy flex items-center gap-2">
+              <Bell size={18} className="text-orange-500" />
+              Promemoria in scadenza
+            </h2>
+            <Link href="/admin/clienti" className="text-sm text-blue font-medium hover:underline">
+              Vedi clienti
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {upcomingReminders.map((r) => (
+              <div key={r.id} className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                <Bell size={16} className="text-orange-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{r.content}</p>
+                  <p className="text-xs text-gray-500">
+                    {r.customerName || 'Cliente'} &middot;{' '}
+                    {r.reminderDate ? new Date(r.reminderDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : ''}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

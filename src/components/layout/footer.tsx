@@ -34,6 +34,7 @@ export function Footer() {
               <li><Link href="/chi-siamo" className="hover:text-white transition-colors">Chi siamo</Link></li>
               <li><Link href="/consegna-pagamento" className="hover:text-white transition-colors">Consegna e pagamento</Link></li>
               <li><Link href="/condizioni-vendita" className="hover:text-white transition-colors">Condizioni di vendita</Link></li>
+              <li><Link href="/aziende" className="hover:text-white transition-colors font-medium text-yellow-300">Per le aziende</Link></li>
               <li><Link href="/ricerca-cartucce" className="hover:text-white transition-colors">Trova cartucce</Link></li>
               <li><Link href="/login" className="hover:text-white transition-colors">Accedi</Link></li>
               <li><Link href="/registrati" className="hover:text-white transition-colors">Registrati</Link></li>

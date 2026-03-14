@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Users, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Save, Package, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Users, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Save, Package, ShoppingCart, TrendingUp, Phone, Mail, MapPin, StickyNote, Bell, Check, Plus } from 'lucide-react';
 
 interface CustomerRow {
   id: number;
@@ -64,6 +64,16 @@ interface TopProduct {
   orderCount: number;
 }
 
+interface CustomerNoteRow {
+  id: number;
+  customerId: number;
+  content: string;
+  type: string;
+  reminderDate: string | null;
+  isCompleted: boolean;
+  createdAt: string;
+}
+
 interface PriceListOption {
   id: number;
   code: string;
@@ -121,6 +131,14 @@ export default function AdminClientiPage() {
   const [selectedPriceList, setSelectedPriceList] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Note state
+  const [notes, setNotes] = useState<CustomerNoteRow[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [noteType, setNoteType] = useState('nota');
+  const [noteReminder, setNoteReminder] = useState('');
+  const [noteSaving, setNoteSaving] = useState(false);
+
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
     try {
@@ -171,6 +189,7 @@ export default function AdminClientiPage() {
       setTopProducts(data.topProducts || []);
       setPriceLists(data.priceLists || []);
       setSelectedPriceList(data.customer?.priceList || 'standard');
+      fetchNotes(customerId);
     } catch {
       console.error('Errore nel caricamento dettaglio');
     } finally {
@@ -199,6 +218,63 @@ export default function AdminClientiPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const fetchNotes = async (customerId: number) => {
+    setNotesLoading(true);
+    try {
+      const res = await fetch(`/api/admin/notes?customerId=${customerId}`);
+      const data = await res.json();
+      setNotes(data.notes || []);
+    } catch { setNotes([]); }
+    finally { setNotesLoading(false); }
+  };
+
+  const handleAddNote = async (customerId: number) => {
+    if (!noteText.trim()) return;
+    setNoteSaving(true);
+    try {
+      await fetch('/api/admin/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId,
+          content: noteText.trim(),
+          type: noteType,
+          reminderDate: noteReminder || undefined,
+        }),
+      });
+      setNoteText('');
+      setNoteReminder('');
+      setNoteType('nota');
+      fetchNotes(customerId);
+    } catch { /* ignore */ }
+    finally { setNoteSaving(false); }
+  };
+
+  const handleCompleteNote = async (noteId: number, customerId: number) => {
+    await fetch('/api/admin/notes', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: noteId, isCompleted: true }),
+    });
+    fetchNotes(customerId);
+  };
+
+  const noteTypeIcons: Record<string, React.ReactNode> = {
+    nota: <StickyNote size={14} />,
+    chiamata: <Phone size={14} />,
+    visita: <MapPin size={14} />,
+    email: <Mail size={14} />,
+    promemoria: <Bell size={14} />,
+  };
+
+  const noteTypeColors: Record<string, string> = {
+    nota: 'bg-gray-100 text-gray-700',
+    chiamata: 'bg-blue-100 text-blue-700',
+    visita: 'bg-green-100 text-green-700',
+    email: 'bg-purple-100 text-purple-700',
+    promemoria: 'bg-orange-100 text-orange-700',
   };
 
   const customerName = (c: { companyName: string | null; firstName: string | null; lastName: string | null }) =>
@@ -505,6 +581,99 @@ export default function AdminClientiPage() {
                                           ))}
                                         </tbody>
                                       </table>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Note e attività */}
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                  <h3 className="font-heading font-bold text-navy mb-3 flex items-center gap-2">
+                                    <StickyNote size={18} />
+                                    Note e Attività
+                                  </h3>
+
+                                  {/* Form nuova nota */}
+                                  <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                                    <select
+                                      value={noteType}
+                                      onChange={(e) => setNoteType(e.target.value)}
+                                      className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    >
+                                      <option value="nota">📝 Nota</option>
+                                      <option value="chiamata">📞 Chiamata</option>
+                                      <option value="visita">📍 Visita</option>
+                                      <option value="email">📧 Email</option>
+                                      <option value="promemoria">🔔 Promemoria</option>
+                                    </select>
+                                    <input
+                                      type="text"
+                                      placeholder="Scrivi una nota..."
+                                      value={noteText}
+                                      onChange={(e) => setNoteText(e.target.value)}
+                                      onKeyDown={(e) => e.key === 'Enter' && detail && handleAddNote(detail.id)}
+                                      className="flex-1 min-w-[200px] text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    />
+                                    {noteType === 'promemoria' && (
+                                      <input
+                                        type="date"
+                                        value={noteReminder}
+                                        onChange={(e) => setNoteReminder(e.target.value)}
+                                        className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                      />
+                                    )}
+                                    <button
+                                      onClick={() => detail && handleAddNote(detail.id)}
+                                      disabled={noteSaving || !noteText.trim()}
+                                      className="flex items-center gap-1 px-3 py-2 bg-blue text-white text-sm font-bold rounded-lg hover:bg-blue-light disabled:opacity-50 transition-colors"
+                                    >
+                                      <Plus size={14} />
+                                      {noteSaving ? '...' : 'Aggiungi'}
+                                    </button>
+                                  </div>
+
+                                  {/* Lista note */}
+                                  {notesLoading ? (
+                                    <p className="text-sm text-gray-500">Caricamento note...</p>
+                                  ) : notes.length === 0 ? (
+                                    <p className="text-sm text-gray-500">Nessuna nota per questo cliente</p>
+                                  ) : (
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {notes.map((n) => (
+                                        <div
+                                          key={n.id}
+                                          className={`flex items-start gap-3 p-3 rounded-lg border ${
+                                            n.isCompleted ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-200'
+                                          }`}
+                                        >
+                                          <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full shrink-0 ${noteTypeColors[n.type] || 'bg-gray-100 text-gray-700'}`}>
+                                            {noteTypeIcons[n.type]} {n.type}
+                                          </span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className={`text-sm ${n.isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                              {n.content}
+                                            </p>
+                                            <div className="flex items-center gap-3 mt-1">
+                                              <span className="text-xs text-gray-400">{formatDate(n.createdAt)}</span>
+                                              {n.reminderDate && !n.isCompleted && (
+                                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                                                  new Date(n.reminderDate) <= new Date() ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                                                }`}>
+                                                  ⏰ {formatDate(n.reminderDate)}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          {!n.isCompleted && n.type === 'promemoria' && (
+                                            <button
+                                              onClick={() => detail && handleCompleteNote(n.id, detail.id)}
+                                              className="shrink-0 p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                              title="Segna completato"
+                                            >
+                                              <Check size={16} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
                                 </div>

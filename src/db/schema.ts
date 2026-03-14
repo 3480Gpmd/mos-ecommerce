@@ -365,6 +365,7 @@ export const customersRelations = relations(customers, ({ many }) => ({
   orders: many(orders),
   wishlists: many(wishlists),
   cartItems: many(cartItems),
+  notes: many(customerNotes),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
@@ -436,6 +437,47 @@ export const siteSettings = pgTable('site_settings', {
   index('site_settings_group_idx').on(table.group),
 ]);
 
+// ─── Note e attività cliente (CRM leggero) ──────────────────────
+
+export const customerNotes = pgTable('customer_notes', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').references(() => customers.id, { onDelete: 'cascade' }).notNull(),
+  content: text('content').notNull(),
+  type: varchar('type', { length: 20 }).notNull().default('nota'), // 'nota' | 'chiamata' | 'visita' | 'email' | 'promemoria'
+  reminderDate: timestamp('reminder_date'),
+  isCompleted: boolean('is_completed').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('customer_notes_customer_idx').on(table.customerId),
+  index('customer_notes_type_idx').on(table.type),
+  index('customer_notes_reminder_idx').on(table.reminderDate),
+]);
+
+// ─── Richieste preventivo ────────────────────────────────────────
+
+export const quoteRequests = pgTable('quote_requests', {
+  id: serial('id').primaryKey(),
+  companyName: varchar('company_name', { length: 255 }),
+  contactName: varchar('contact_name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 30 }),
+  message: text('message'),
+  interests: text('interests'), // 'caffè, acqua, forniture'
+  status: varchar('status', { length: 30 }).notNull().default('nuovo'), // 'nuovo' | 'contattato' | 'preventivo_inviato' | 'chiuso'
+  adminNotes: text('admin_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('quote_requests_status_idx').on(table.status),
+  index('quote_requests_created_idx').on(table.createdAt),
+]);
+
+// ─── Relations CRM ────────────────────────────────────────────────
+
+export const customerNotesRelations = relations(customerNotes, ({ one }) => ({
+  customer: one(customers, { fields: [customerNotes.customerId], references: [customers.id] }),
+}));
+
 // ─── Types ─────────────────────────────────────────────────────────
 
 export type Product = typeof products.$inferSelect;
@@ -447,3 +489,5 @@ export type NewOrder = typeof orders.$inferInsert;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type NewOrderItem = typeof orderItems.$inferInsert;
 export type SiteSetting = typeof siteSettings.$inferSelect;
+export type CustomerNote = typeof customerNotes.$inferSelect;
+export type QuoteRequest = typeof quoteRequests.$inferSelect;
