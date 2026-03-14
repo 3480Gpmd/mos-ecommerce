@@ -38,12 +38,12 @@ export default function HomePage() {
               </div>
               {/* Foto */}
               <div className="hidden md:flex justify-center">
-                <div className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gray-200">
+                <div className="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gray-200">
                   <Image
                     src="/Home 1b.png"
                     alt="Davide - Milano Offre Servizi"
                     fill
-                    className="object-cover"
+                    className="object-cover object-top"
                     priority
                   />
                 </div>
