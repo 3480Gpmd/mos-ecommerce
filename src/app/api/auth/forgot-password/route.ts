@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { customers, passwordResets } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { sendEmail, passwordResetEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,21 +40,26 @@ export async function POST(req: NextRequest) {
     });
 
     // Build reset URL
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://mos-ecommerce.vercel.app';
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
-    // Try to send email (log to console if SMTP not configured)
     console.log(`🔑 Password reset requested for ${customer.email}`);
-    console.log(`🔗 Reset URL: ${resetUrl}`);
 
-    // TODO: Send email when SMTP is configured
-    // For now, we log the URL. In production, integrate with Nodemailer/Resend/etc.
+    // Send email with Resend
+    const emailContent = passwordResetEmail(resetUrl);
+    const result = await sendEmail({
+      to: customer.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    });
+
+    if (!result.success) {
+      console.warn(`⚠️ Email non inviata: ${result.reason}. Reset URL: ${resetUrl}`);
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Se l\'email è registrata, riceverai un link per reimpostare la password.',
-      // In development, return the token for testing
-      ...(process.env.NODE_ENV === 'development' ? { resetUrl } : {}),
     });
   } catch (err) {
     console.error('Forgot password error:', err);

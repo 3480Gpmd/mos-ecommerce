@@ -52,18 +52,23 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // Utenti privati → attivi subito. Aziende → richiedono attivazione admin
+    const isActive = data.customerType === 'privato';
+
     const [customer] = await db.insert(customers).values({
       email: email.toLowerCase(),
       passwordHash,
+      isActive,
       ...data,
     }).returning();
 
-    console.log(`🔵 Nuovo cliente registrato: ${email} (${data.customerType})`);
+    console.log(`🔵 Nuovo cliente registrato: ${email} (${data.customerType}) - attivo: ${isActive}`);
 
     return NextResponse.json({
       id: customer.id,
       email: customer.email,
       customerType: customer.customerType,
+      isActive,
     }, { status: 201 });
   } catch (err: unknown) {
     console.error('🔴 POST /api/customers error:', err);

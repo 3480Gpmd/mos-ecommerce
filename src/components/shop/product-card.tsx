@@ -129,7 +129,7 @@ export function ProductCard({ product }: { product: Product }) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-contain p-3 group-hover:scale-105 transition-transform duration-200"
-            unoptimized={!product.imageUrl.includes('identiprint.it')}
+            unoptimized={!product.imageUrl.includes('identiprint.it') && !product.imageUrl.startsWith('/')}
           />
         ) : (
           <div className={`w-full h-full flex flex-col items-center justify-center ${color}`}>

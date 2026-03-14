@@ -27,6 +27,8 @@ export default function RegistratiPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [needsActivation, setNeedsActivation] = useState(false);
 
   const update = (key: string, value: string) => setForm({ ...form, [key]: value });
 
@@ -64,20 +66,50 @@ export default function RegistratiPage() {
         return;
       }
 
-      // Auto-login
-      await signIn('credentials', {
-        email: form.email,
-        password: form.password,
-        redirect: false,
-      });
+      setRegistered(true);
 
-      router.push('/');
+      if (data.isActive) {
+        // Utente privato: auto-login immediato
+        await signIn('credentials', {
+          email: form.email,
+          password: form.password,
+          redirect: false,
+        });
+        router.push('/');
+      } else {
+        // Azienda: richiede attivazione admin
+        setNeedsActivation(true);
+      }
     } catch {
       setError('Errore di rete');
     } finally {
       setLoading(false);
     }
   };
+
+  if (needsActivation) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 text-center">
+        <div className="bg-green-50 border border-green-200 rounded-xl p-8">
+          <div className="text-4xl mb-4">✅</div>
+          <h1 className="font-heading text-2xl font-bold mb-3">Registrazione completata!</h1>
+          <p className="text-gray-600 mb-2">
+            Il tuo account aziendale è stato creato con successo.
+          </p>
+          <p className="text-gray-600 mb-6">
+            Un amministratore verificherà i tuoi dati e attiverà il tuo account.
+            Riceverai una comunicazione quando sarà attivo.
+          </p>
+          <Link
+            href="/"
+            className="inline-block bg-blue text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-light transition-colors"
+          >
+            Torna alla home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
