@@ -27,6 +27,9 @@ interface CsvRow {
   CATALOGO_SOTTOCAT_CODICE: string;
   CATALOGO_SOTTOCAT_DESCRIZIONE: string;
   UNITA_MISURA_QTA: string;
+  MIN_ACQUISTO: string;
+  DELTA_RIORDINO: string;
+  CONFEZIONE_PZ: string;
 }
 
 function parseCsvLine(line: string): string[] {
@@ -209,6 +212,9 @@ export async function importCsv(filePath: string): Promise<{
           isActive: true,
           imageUrl: row.IMMAGINE || null,
           unit: row.UNITA_MISURA_QTA || 'PZ',
+          minOrderQty: parseInt(row.MIN_ACQUISTO) || 1,
+          orderMultiple: parseInt(row.DELTA_RIORDINO) || 1,
+          packSize: parseInt(row.CONFEZIONE_PZ) || null,
           groupId,
           categoryId,
           subcategoryId,

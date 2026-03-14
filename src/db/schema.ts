@@ -72,6 +72,11 @@ export const products = pgTable('products', {
   stockOrdered: integer('stock_ordered').default(0),
   stockArrivalDate: varchar('stock_arrival_date', { length: 20 }),
 
+  // Ordine minimo
+  minOrderQty: integer('min_order_qty').default(1),
+  orderMultiple: integer('order_multiple').default(1),
+  packSize: integer('pack_size'),
+
   isActive: boolean('is_active').default(true).notNull(),
   isManual: boolean('is_manual').default(false).notNull(),
   isPromo: boolean('is_promo').default(false).notNull(),
@@ -161,6 +166,15 @@ export const orders = pgTable('orders', {
   // Stato
   status: varchar('status', { length: 30 }).default('nuovo').notNull(),
   // 'nuovo' | 'confermato' | 'in_preparazione' | 'spedito' | 'consegnato' | 'annullato'
+
+  // Urgenza e destinazione alternativa
+  isUrgent: boolean('is_urgent').default(false).notNull(),
+  altShipping: boolean('alt_shipping').default(false).notNull(),
+  altShippingAddress: text('alt_shipping_address'),
+  altShippingPostcode: varchar('alt_shipping_postcode', { length: 10 }),
+  altShippingCity: varchar('alt_shipping_city', { length: 100 }),
+  altShippingProvince: varchar('alt_shipping_province', { length: 5 }),
+  altShippingName: varchar('alt_shipping_name', { length: 255 }),
 
   // Note
   notes: text('notes'),

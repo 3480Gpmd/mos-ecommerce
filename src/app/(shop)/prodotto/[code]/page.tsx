@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShoppingCart, Heart, Minus, Plus, Check, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Heart, Minus, Plus, Check, ArrowLeft, Info, Package } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Product } from '@/db/schema';
 
 export default function ProductPage() {
@@ -21,22 +22,36 @@ export default function ProductPage() {
     fetch(`/api/products/${code}`)
       .then((res) => res.json())
       .then((data) => {
-        if (!data.error) setProduct(data);
+        if (!data.error) {
+          setProduct(data);
+          const min = data.minOrderQty ?? 1;
+          setQty(min);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [code]);
 
+  const minQty = product?.minOrderQty ?? 1;
+  const multiple = product?.orderMultiple ?? 1;
+
+  const adjustQty = useCallback((newQty: number) => {
+    const rounded = Math.max(minQty, Math.ceil(newQty / multiple) * multiple);
+    setQty(rounded);
+  }, [minQty, multiple]);
+
   const handleAddToCart = async () => {
     if (!product) return;
     try {
-      await fetch('/api/cart', {
+      const res = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product.id, qty }),
       });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+      if (res.ok) {
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2000);
+      }
     } catch {
       // Handle error
     }
@@ -86,10 +101,13 @@ export default function ProductPage() {
         {/* Image */}
         <div className="relative aspect-square bg-gray-50 rounded-xl p-8">
           {product.imageUrl ? (
-            <img
+            <Image
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-contain"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain p-4"
+              unoptimized={!product.imageUrl.includes('identiprint.it') && !product.imageUrl.startsWith('/')}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -138,44 +156,83 @@ export default function ProductPage() {
             )}
           </div>
 
+          {/* Min order info */}
+          {(minQty > 1 || multiple > 1 || (product.packSize && product.packSize > 1)) && (
+            <div className="bg-blue/5 border border-blue/20 rounded-xl p-4 mb-6 space-y-2">
+              {minQty > 1 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Info size={14} className="text-blue-500 flex-shrink-0" />
+                  <span className="text-blue-700">Quantità minima d&apos;ordine: <strong>{minQty} pz</strong></span>
+                </div>
+              )}
+              {multiple > 1 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Info size={14} className="text-blue-500 flex-shrink-0" />
+                  <span className="text-blue-700">Ordina in multipli di: <strong>{multiple} pz</strong></span>
+                </div>
+              )}
+              {product.packSize && product.packSize > 1 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Package size={14} className="text-blue-500 flex-shrink-0" />
+                  <span className="text-blue-700">Confezione da: <strong>{product.packSize} pz</strong></span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Add to cart */}
           {session?.user && (
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center border rounded-lg">
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center border rounded-lg">
+                  <button
+                    onClick={() => adjustQty(qty - multiple)}
+                    disabled={qty <= minQty}
+                    className="p-3 hover:bg-gray-50 disabled:opacity-30"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <input
+                    type="number"
+                    value={qty}
+                    onChange={(e) => adjustQty(parseInt(e.target.value) || minQty)}
+                    className="w-16 text-center font-medium border-0 focus:outline-none"
+                    min={minQty}
+                    step={multiple}
+                  />
+                  <button
+                    onClick={() => adjustQty(qty + multiple)}
+                    className="p-3 hover:bg-gray-50"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
                 <button
-                  onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="p-3 hover:bg-gray-50"
+                  onClick={handleAddToCart}
+                  disabled={added}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-bold text-white transition-colors ${
+                    added ? 'bg-green-600' : 'bg-blue hover:bg-blue-light'
+                  }`}
                 >
-                  <Minus size={16} />
+                  {added ? (
+                    <>
+                      <Check size={18} /> Aggiunto al carrello!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} /> Aggiungi {qty} pz al carrello
+                    </>
+                  )}
                 </button>
-                <span className="w-12 text-center font-medium">{qty}</span>
-                <button
-                  onClick={() => setQty(qty + 1)}
-                  className="p-3 hover:bg-gray-50"
-                >
-                  <Plus size={16} />
+                <button className="p-3 border rounded-lg hover:bg-gray-50 text-gray-600 hover:text-red">
+                  <Heart size={18} />
                 </button>
               </div>
-              <button
-                onClick={handleAddToCart}
-                disabled={added}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-bold text-white transition-colors ${
-                  added ? 'bg-green-600' : 'bg-blue hover:bg-blue-light'
-                }`}
-              >
-                {added ? (
-                  <>
-                    <Check size={18} /> Aggiunto!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart size={18} /> Aggiungi al carrello
-                  </>
-                )}
-              </button>
-              <button className="p-3 border rounded-lg hover:bg-gray-50 text-gray-600 hover:text-red">
-                <Heart size={18} />
-              </button>
+              <p className="text-sm text-gray-500">
+                Totale: <span className="font-bold text-navy">
+                  {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(displayPrice * qty)}
+                </span>
+              </p>
             </div>
           )}
 

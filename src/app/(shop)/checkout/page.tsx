@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Trash2, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, AlertTriangle, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -37,6 +37,16 @@ export default function CheckoutPage() {
     province: '',
   });
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'teamsystem' | 'bonifico'>('paypal');
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [altShipping, setAltShipping] = useState(false);
+  const [altAddress, setAltAddress] = useState({
+    name: '',
+    address: '',
+    postcode: '',
+    city: '',
+    province: '',
+  });
+  const [orderNotes, setOrderNotes] = useState('');
 
   const customerType = (session?.user as { customerType?: string } | undefined)?.customerType || 'privato';
 
@@ -92,12 +102,21 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...shipping,
           shippingAddress: shipping.address,
           shippingPostcode: shipping.postcode,
           shippingCity: shipping.city,
           shippingProvince: shipping.province,
           paymentMethod,
+          isUrgent,
+          altShipping,
+          ...(altShipping ? {
+            altShippingName: altAddress.name,
+            altShippingAddress: altAddress.address,
+            altShippingPostcode: altAddress.postcode,
+            altShippingCity: altAddress.city,
+            altShippingProvince: altAddress.province,
+          } : {}),
+          notes: orderNotes || undefined,
         }),
       });
       const data = await res.json();
@@ -272,6 +291,112 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Destinazione alternativa */}
+          <div className="border-t pt-4 mt-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={altShipping}
+                onChange={(e) => setAltShipping(e.target.checked)}
+                className="w-4 h-4 text-blue focus:ring-blue rounded"
+              />
+              <div className="flex items-center gap-2">
+                <MapPin size={16} className="text-gray-500" />
+                <span className="text-sm font-medium">Spedisci a un indirizzo diverso</span>
+              </div>
+            </label>
+
+            {altShipping && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pl-7">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Nome / Ragione Sociale destinatario</label>
+                  <input
+                    type="text"
+                    value={altAddress.name}
+                    onChange={(e) => setAltAddress({ ...altAddress, name: e.target.value })}
+                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue"
+                    placeholder="Es. Mario Rossi c/o Azienda Srl"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Indirizzo</label>
+                  <input
+                    type="text"
+                    value={altAddress.address}
+                    onChange={(e) => setAltAddress({ ...altAddress, address: e.target.value })}
+                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">CAP</label>
+                  <input
+                    type="text"
+                    value={altAddress.postcode}
+                    onChange={(e) => setAltAddress({ ...altAddress, postcode: e.target.value })}
+                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Città</label>
+                  <input
+                    type="text"
+                    value={altAddress.city}
+                    onChange={(e) => setAltAddress({ ...altAddress, city: e.target.value })}
+                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Provincia</label>
+                  <input
+                    type="text"
+                    value={altAddress.province}
+                    onChange={(e) => setAltAddress({ ...altAddress, province: e.target.value.toUpperCase() })}
+                    maxLength={2}
+                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Urgenza */}
+          <div className="border-t pt-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isUrgent}
+                onChange={(e) => setIsUrgent(e.target.checked)}
+                className="w-4 h-4 text-red focus:ring-red rounded"
+              />
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={16} className="text-red" />
+                <span className="text-sm font-medium">Ordine urgente</span>
+              </div>
+            </label>
+            {isUrgent && (
+              <p className="text-xs text-orange-600 mt-2 pl-7">
+                L&apos;ordine sarà processato con priorità. Il nostro team farà il possibile per accelerare la consegna.
+              </p>
+            )}
+          </div>
+
+          {/* Note ordine */}
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium mb-1">Note per l&apos;ordine (opzionale)</label>
+            <textarea
+              value={orderNotes}
+              onChange={(e) => setOrderNotes(e.target.value)}
+              placeholder="Istruzioni particolari per la consegna, riferimenti interni..."
+              className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue text-sm"
+              rows={3}
+            />
+          </div>
+
           <div className="flex gap-3">
             <button
               onClick={() => setStep('cart')}
@@ -282,6 +407,10 @@ export default function CheckoutPage() {
             <button
               onClick={() => {
                 if (shipping.address && shipping.postcode && shipping.city && shipping.province) {
+                  if (altShipping && (!altAddress.address || !altAddress.postcode || !altAddress.city || !altAddress.province)) {
+                    alert('Compila tutti i campi dell\'indirizzo alternativo');
+                    return;
+                  }
                   setStep('payment');
                 }
               }}
@@ -326,6 +455,18 @@ export default function CheckoutPage() {
 
           {/* Order summary */}
           <div className="bg-gray-50 rounded-xl p-6 space-y-2 text-sm">
+            {isUrgent && (
+              <div className="flex items-center gap-2 text-red font-medium mb-2">
+                <AlertTriangle size={16} />
+                <span>ORDINE URGENTE</span>
+              </div>
+            )}
+            {altShipping && (
+              <div className="text-gray-600 mb-2">
+                <p className="font-medium flex items-center gap-1"><MapPin size={14} /> Spedizione a:</p>
+                <p className="text-xs ml-5">{altAddress.name && `${altAddress.name}, `}{altAddress.address}, {altAddress.postcode} {altAddress.city} ({altAddress.province})</p>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-lg">
               <span>Totale ordine</span>
               <span>{formatCurrency(total)}</span>
