@@ -80,10 +80,10 @@ export default function HomePage() {
                 <h3 className="font-heading text-lg font-bold mb-2">Caffè</h3>
                 <p className="text-sm text-gray-500">Lavazza, Borbone, Covim, Toraldo, Gise. Cialde, capsule e grani.</p>
               </Link>
-              <Link href="/catalogo?group=acqua" className="group bg-white border rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all">
+              <Link href="/catalogo?group=bevande-fredde" className="group bg-white border rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all">
                 <div className="text-blue mb-4 flex justify-center"><Droplets size={48} /></div>
-                <h3 className="font-heading text-lg font-bold mb-2">Acqua</h3>
-                <p className="text-sm text-gray-500">Boccioni, bottiglie, dispenser. Consegna programmata in ufficio.</p>
+                <h3 className="font-heading text-lg font-bold mb-2">Servizio Acqua</h3>
+                <p className="text-sm text-gray-500">Acqua, succhi, bibite e bevande fredde. Levissima, San Benedetto, Valfrutta e altre.</p>
               </Link>
             </div>
           </div>

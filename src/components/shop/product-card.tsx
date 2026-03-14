@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Heart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail } from 'lucide-react';
+import Image from 'next/image';
+import { ShoppingCart, Heart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react';
 import type { Product } from '@/db/schema';
 import { useSession } from 'next-auth/react';
 
@@ -122,11 +123,13 @@ export function ProductCard({ product }: { product: Product }) {
       {/* Image */}
       <div className={`relative aspect-square ${product.imageUrl ? 'bg-gray-50' : bg} p-4`}>
         {product.imageUrl ? (
-          <img
+          <Image
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-            loading="lazy"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain p-3 group-hover:scale-105 transition-transform duration-200"
+            unoptimized={!product.imageUrl.includes('identiprint.it')}
           />
         ) : (
           <div className={`w-full h-full flex flex-col items-center justify-center ${color}`}>
@@ -137,12 +140,12 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         )}
         {product.isPromo && (
-          <span className="absolute top-2 left-2 bg-red text-white text-xs font-bold px-2 py-1 rounded">
+          <span className="absolute top-2 left-2 bg-red text-white text-xs font-bold px-2 py-1 rounded z-10">
             PROMO
           </span>
         )}
         {product.isExhausting && (
-          <span className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+          <span className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
             ULTIME SCORTE
           </span>
         )}
@@ -156,6 +159,31 @@ export function ProductCard({ product }: { product: Product }) {
         <h3 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[2.5rem] mb-2">
           {product.name}
         </h3>
+        {/* Disponibilità */}
+        <div className="flex items-center gap-1 mb-2">
+          {(product.stockAvailable ?? 0) > 5 ? (
+            <>
+              <CheckCircle size={12} className="text-green-500" />
+              <span className="text-xs text-green-600">Disponibile ({product.stockAvailable})</span>
+            </>
+          ) : (product.stockAvailable ?? 0) > 0 ? (
+            <>
+              <AlertTriangle size={12} className="text-yellow-500" />
+              <span className="text-xs text-yellow-600">Ultime {product.stockAvailable} pz</span>
+            </>
+          ) : (product.stockOrdered ?? 0) > 0 ? (
+            <>
+              <Clock size={12} className="text-blue-500" />
+              <span className="text-xs text-blue-600">In arrivo ({product.stockOrdered} pz){product.stockArrivalDate ? ` - ${product.stockArrivalDate}` : ''}</span>
+            </>
+          ) : (
+            <>
+              <XCircle size={12} className="text-gray-400" />
+              <span className="text-xs text-gray-400">Non disponibile</span>
+            </>
+          )}
+        </div>
+
         <div className="flex items-end justify-between">
           <div>
             <p className="text-lg font-bold text-navy">
