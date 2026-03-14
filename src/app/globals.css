@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #0f1923;
+  --color-navy-light: #1a2d3d;
+  --color-blue: #1d4ed8;
+  --color-blue-light: #3b82f6;
+  --color-red: #dc2626;
+  --color-red-light: #ef4444;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-heading: var(--font-syne), system-ui, sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Animated page title */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lineExpand {
+  from {
+    width: 0;
+  }
+  to {
+    width: 3rem;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out both;
+}
+
+.animate-line-expand {
+  animation: lineExpand 0.6s ease-out 0.3s both;
+}
