@@ -8,6 +8,7 @@ import { z } from 'zod';
 const cartActionSchema = z.object({
   productId: z.number(),
   qty: z.number().min(0).default(1),
+  isUrgent: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -24,6 +25,7 @@ export async function GET() {
         id: cartItems.id,
         productId: cartItems.productId,
         qty: cartItems.qty,
+        isUrgent: cartItems.isUrgent,
         product: {
           code: products.code,
           name: products.name,
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { productId, qty } = parsed.data;
+    const { productId, qty, isUrgent } = parsed.data;
 
     // Remove if qty is 0
     if (qty === 0) {
@@ -76,11 +78,13 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (existing.length > 0) {
+      const updateData: { qty: number; updatedAt: Date; isUrgent?: boolean } = { qty, updatedAt: new Date() };
+      if (isUrgent !== undefined) updateData.isUrgent = isUrgent;
       await db.update(cartItems)
-        .set({ qty, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(cartItems.id, existing[0].id));
     } else {
-      await db.insert(cartItems).values({ customerId, productId, qty });
+      await db.insert(cartItems).values({ customerId, productId, qty, isUrgent: isUrgent ?? false });
     }
 
     return NextResponse.json({ message: 'Carrello aggiornato' });

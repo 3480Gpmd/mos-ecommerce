@@ -1,5 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
+import Apple from 'next-auth/providers/apple';
 import { db } from '@/db';
 import { customers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -7,6 +9,14 @@ import bcrypt from 'bcryptjs';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    Apple({
+      clientId: process.env.APPLE_CLIENT_ID!,
+      clientSecret: process.env.APPLE_CLIENT_SECRET!,
+    }),
     Credentials({
       name: 'credentials',
       credentials: {
@@ -26,6 +36,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .limit(1);
 
         if (!customer) return null;
+
+        // Se l'utente si è registrato solo via OAuth, non ha password
+        if (!customer.passwordHash) return null;
 
         const valid = await bcrypt.compare(password, customer.passwordHash);
         if (!valid) return null;
@@ -47,6 +60,64 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // Per login OAuth (Google/Apple), crea o collega il customer
+      if (account?.provider === 'google' || account?.provider === 'apple') {
+        const email = user.email?.toLowerCase();
+        if (!email) return false;
+
+        const [existing] = await db
+          .select()
+          .from(customers)
+          .where(eq(customers.email, email))
+          .limit(1);
+
+        if (existing) {
+          // Utente esiste già — aggiorna provider OAuth se non impostato
+          if (!existing.oauthProvider) {
+            await db.update(customers)
+              .set({
+                oauthProvider: account.provider,
+                oauthId: account.providerAccountId,
+              })
+              .where(eq(customers.id, existing.id));
+          }
+
+          // Controlla attivazione (non-admin)
+          if (existing.role !== 'admin' && !existing.isActive) {
+            return '/login?error=ACCOUNT_INACTIVE';
+          }
+
+          // Imposta l'id per il JWT callback
+          user.id = String(existing.id);
+          (user as Record<string, unknown>).customerType = existing.customerType;
+          (user as Record<string, unknown>).role = existing.role;
+          (user as Record<string, unknown>).isAdmin = existing.role === 'admin';
+        } else {
+          // Crea nuovo customer (privato, attivo subito)
+          const nameParts = (user.name || '').split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+
+          const [newCustomer] = await db.insert(customers).values({
+            email,
+            firstName,
+            lastName,
+            customerType: 'privato',
+            oauthProvider: account.provider,
+            oauthId: account.providerAccountId,
+            isActive: true,
+            role: 'customer',
+          }).returning();
+
+          user.id = String(newCustomer.id);
+          (user as Record<string, unknown>).customerType = 'privato';
+          (user as Record<string, unknown>).role = 'customer';
+          (user as Record<string, unknown>).isAdmin = false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.customerId = user.id;

@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { productGroups, productCategories, productSubcategories } from '@/db/schema';
 import { asc, eq } from 'drizzle-orm';
 
-export const revalidate = 300; // 5 minutes
+export const dynamic = 'force-dynamic'; // sempre fresco, no cache
 
 export async function GET() {
   try {

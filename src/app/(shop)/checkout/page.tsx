@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Trash2, Minus, Plus, ShoppingCart, AlertTriangle, MapPin } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, AlertTriangle, MapPin, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -11,6 +11,7 @@ interface CartItem {
   id: number;
   productId: number;
   qty: number;
+  isUrgent: boolean;
   product: {
     code: string;
     name: string;
@@ -47,6 +48,7 @@ export default function CheckoutPage() {
     province: '',
   });
   const [orderNotes, setOrderNotes] = useState('');
+  const [addressLoaded, setAddressLoaded] = useState(false);
 
   const customerType = (session?.user as { customerType?: string } | undefined)?.customerType || 'privato';
 
@@ -56,6 +58,7 @@ export default function CheckoutPage() {
       return;
     }
     fetchCart();
+    fetchCustomerAddress();
   }, [status, router]);
 
   const fetchCart = async () => {
@@ -70,6 +73,26 @@ export default function CheckoutPage() {
     }
   };
 
+  const fetchCustomerAddress = async () => {
+    try {
+      const res = await fetch('/api/customers/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.address && !addressLoaded) {
+          setShipping({
+            address: data.address || '',
+            postcode: data.postcode || '',
+            city: data.city || '',
+            province: data.province || '',
+          });
+          setAddressLoaded(true);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   const updateQty = async (productId: number, qty: number) => {
     await fetch('/api/cart', {
       method: 'POST',
@@ -77,6 +100,18 @@ export default function CheckoutPage() {
       body: JSON.stringify({ productId, qty }),
     });
     fetchCart();
+  };
+
+  const toggleItemUrgent = async (productId: number, currentQty: number, urgent: boolean) => {
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, qty: currentQty, isUrgent: urgent }),
+    });
+    // Aggiorna localmente per feedback immediato
+    setItems(prev => prev.map(item =>
+      item.productId === productId ? { ...item, isUrgent: urgent } : item
+    ));
   };
 
   const subtotal = items.reduce((sum, item) => {
@@ -91,6 +126,7 @@ export default function CheckoutPage() {
 
   const shippingCost = subtotal >= 100 ? 0 : 8.90;
   const total = subtotal + vatTotal + shippingCost;
+  const urgentItems = items.filter(i => i.isUrgent);
 
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
@@ -185,7 +221,7 @@ export default function CheckoutPage() {
             const displayPrice = customerType === 'privato' ? priceNet * (1 + vatRate / 100) : priceNet;
 
             return (
-              <div key={item.id} className="flex items-center gap-4 border rounded-xl p-4">
+              <div key={item.id} className={`flex items-center gap-4 border rounded-xl p-4 ${item.isUrgent ? 'border-orange-300 bg-orange-50/50' : ''}`}>
                 <div className="w-16 h-16 bg-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center">
                   {item.product.imageUrl ? (
                     <img src={item.product.imageUrl} alt="" className="w-full h-full object-contain p-1" />
@@ -194,7 +230,12 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm line-clamp-1">{item.product.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm line-clamp-1">{item.product.name}</p>
+                    {item.isUrgent && (
+                      <span className="flex-shrink-0 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">URGENTE</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">{item.product.brand} - {item.product.code}</p>
                   <p className="text-sm font-bold text-navy mt-1">{formatCurrency(displayPrice)}</p>
                 </div>
@@ -208,12 +249,39 @@ export default function CheckoutPage() {
                   </button>
                 </div>
                 <p className="font-bold text-sm w-20 text-right">{formatCurrency(displayPrice * item.qty)}</p>
+                {/* Toggle urgenza prodotto */}
+                <button
+                  onClick={() => toggleItemUrgent(item.productId, item.qty, !item.isUrgent)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    item.isUrgent
+                      ? 'bg-orange-500 text-white hover:bg-orange-600'
+                      : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+                  }`}
+                  title={item.isUrgent ? 'Rimuovi urgenza' : 'Segna come urgente'}
+                >
+                  <Zap size={16} />
+                </button>
                 <button onClick={() => updateQty(item.productId, 0)} className="text-gray-400 hover:text-red">
                   <Trash2 size={16} />
                 </button>
               </div>
             );
           })}
+
+          {/* Info urgenza prodotti */}
+          {urgentItems.length > 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
+              <Zap size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-orange-700">
+                  {urgentItems.length} prodott{urgentItems.length === 1 ? 'o' : 'i'} contrassegnat{urgentItems.length === 1 ? 'o' : 'i'} come urgente
+                </p>
+                <p className="text-xs text-orange-600 mt-1">
+                  Organizzeremo una consegna prioritaria per questi articoli.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-gray-50 rounded-xl p-6 space-y-2 text-sm">
             <div className="flex justify-between">
@@ -247,6 +315,9 @@ export default function CheckoutPage() {
 
       {step === 'shipping' && (
         <div className="space-y-4">
+          <h2 className="font-bold text-lg flex items-center gap-2">
+            <MapPin size={18} /> Indirizzo di spedizione
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-1">Indirizzo</label>
@@ -364,7 +435,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Urgenza */}
+          {/* Urgenza ordine intero */}
           <div className="border-t pt-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -375,7 +446,7 @@ export default function CheckoutPage() {
               />
               <div className="flex items-center gap-2">
                 <AlertTriangle size={16} className="text-red" />
-                <span className="text-sm font-medium">Ordine urgente</span>
+                <span className="text-sm font-medium">Ordine urgente (tutto l&apos;ordine)</span>
               </div>
             </label>
             {isUrgent && (
@@ -453,23 +524,69 @@ export default function CheckoutPage() {
             ))}
           </div>
 
-          {/* Order summary */}
-          <div className="bg-gray-50 rounded-xl p-6 space-y-2 text-sm">
+          {/* Order summary / Recap */}
+          <div className="bg-gray-50 rounded-xl p-6 space-y-3 text-sm">
+            <h3 className="font-bold text-base mb-2">Riepilogo ordine</h3>
+
+            {/* Indirizzo spedizione */}
+            <div className="text-gray-600">
+              <p className="font-medium flex items-center gap-1"><MapPin size={14} /> Spedizione:</p>
+              <p className="text-xs ml-5">{shipping.address}, {shipping.postcode} {shipping.city} ({shipping.province})</p>
+            </div>
+
+            {altShipping && (
+              <div className="text-gray-600">
+                <p className="font-medium flex items-center gap-1"><MapPin size={14} /> Destinazione alternativa:</p>
+                <p className="text-xs ml-5">{altAddress.name && `${altAddress.name}, `}{altAddress.address}, {altAddress.postcode} {altAddress.city} ({altAddress.province})</p>
+              </div>
+            )}
+
             {isUrgent && (
-              <div className="flex items-center gap-2 text-red font-medium mb-2">
+              <div className="flex items-center gap-2 text-red font-medium">
                 <AlertTriangle size={16} />
                 <span>ORDINE URGENTE</span>
               </div>
             )}
-            {altShipping && (
-              <div className="text-gray-600 mb-2">
-                <p className="font-medium flex items-center gap-1"><MapPin size={14} /> Spedizione a:</p>
-                <p className="text-xs ml-5">{altAddress.name && `${altAddress.name}, `}{altAddress.address}, {altAddress.postcode} {altAddress.city} ({altAddress.province})</p>
+
+            {urgentItems.length > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="font-medium text-orange-700 flex items-center gap-1 mb-1">
+                  <Zap size={14} /> Prodotti urgenti:
+                </p>
+                {urgentItems.map(item => (
+                  <p key={item.id} className="text-xs text-orange-600 ml-5">
+                    - {item.product.name} ({item.qty} {item.product.unit || 'pz'})
+                  </p>
+                ))}
               </div>
             )}
-            <div className="flex justify-between font-bold text-lg">
-              <span>Totale ordine</span>
-              <span>{formatCurrency(total)}</span>
+
+            {orderNotes && (
+              <div className="text-gray-600">
+                <p className="font-medium">Note:</p>
+                <p className="text-xs ml-5 italic">{orderNotes}</p>
+              </div>
+            )}
+
+            <div className="border-t pt-2 mt-2 space-y-1">
+              <div className="flex justify-between">
+                <span>Subtotale</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              {customerType === 'azienda' && (
+                <div className="flex justify-between text-gray-500">
+                  <span>IVA</span>
+                  <span>{formatCurrency(vatTotal)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>Spedizione</span>
+                <span>{shippingCost === 0 ? 'Gratuita' : formatCurrency(shippingCost)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                <span>Totale ordine</span>
+                <span>{formatCurrency(total)}</span>
+              </div>
             </div>
           </div>
 

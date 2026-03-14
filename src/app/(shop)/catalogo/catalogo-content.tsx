@@ -173,7 +173,7 @@ export function CatalogoContent() {
                 </Link>
                 <ul className="space-y-0.5 border-l-2 border-gray-200 ml-1">
                   {currentGroup.categories.map((cat) => (
-                    <li key={cat.id}>
+                    <li key={cat.id} className="group/cat">
                       <Link
                         href={`/catalogo?group=${currentGroup.slug}&category=${cat.slug}`}
                         className={`block text-sm py-1.5 pl-4 -ml-[2px] border-l-2 transition-colors ${
@@ -184,29 +184,40 @@ export function CatalogoContent() {
                       >
                         {titleCase(cat.name)}
                       </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Subcategory filters */}
-            {currentCategory && currentCategory.subcategories.length > 0 && (
-              <div>
-                <h3 className="font-bold text-sm mb-2">Filtra per tipo</h3>
-                <ul className="space-y-0.5">
-                  {currentCategory.subcategories.map((sub) => (
-                    <li key={sub.id}>
-                      <button
-                        onClick={() => updateParam('subcategory', subcategory === sub.slug ? '' : sub.slug)}
-                        className={`w-full text-left text-sm py-1.5 px-3 rounded-lg transition-colors ${
-                          subcategory === sub.slug
-                            ? 'bg-blue/10 text-blue font-semibold'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-navy'
-                        }`}
-                      >
-                        {titleCase(sub.name)}
-                      </button>
+                      {/* Sottocategorie visibili on hover o quando categoria selezionata */}
+                      {cat.subcategories.length > 0 && (
+                        <ul className={`ml-4 mt-0.5 space-y-0.5 overflow-hidden transition-all ${
+                          category === cat.slug
+                            ? 'max-h-96 opacity-100'
+                            : 'max-h-0 opacity-0 group-hover/cat:max-h-96 group-hover/cat:opacity-100'
+                        }`}>
+                          {cat.subcategories.map((sub) => (
+                            <li key={sub.id}>
+                              <button
+                                onClick={() => {
+                                  const params = new URLSearchParams(searchParams.toString());
+                                  params.set('group', currentGroup.slug);
+                                  params.set('category', cat.slug);
+                                  if (subcategory === sub.slug && category === cat.slug) {
+                                    params.delete('subcategory');
+                                  } else {
+                                    params.set('subcategory', sub.slug);
+                                  }
+                                  params.delete('page');
+                                  router.push(`/catalogo?${params}`);
+                                }}
+                                className={`w-full text-left text-xs py-1 pl-3 rounded transition-colors ${
+                                  subcategory === sub.slug && category === cat.slug
+                                    ? 'text-blue font-semibold bg-blue/5'
+                                    : 'text-gray-500 hover:text-navy hover:bg-gray-50'
+                                }`}
+                              >
+                                {titleCase(sub.name)}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>

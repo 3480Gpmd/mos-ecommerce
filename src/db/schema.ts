@@ -106,7 +106,9 @@ export const products = pgTable('products', {
 export const customers = pgTable('customers', {
   id: serial('id').primaryKey(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  passwordHash: text('password_hash'), // nullable per utenti OAuth
+  oauthProvider: varchar('oauth_provider', { length: 20 }), // 'google' | 'apple'
+  oauthId: varchar('oauth_id', { length: 255 }),
   firstName: varchar('first_name', { length: 100 }),
   lastName: varchar('last_name', { length: 100 }),
   companyName: varchar('company_name', { length: 255 }),
@@ -116,6 +118,7 @@ export const customers = pgTable('customers', {
   sdiCode: varchar('sdi_code', { length: 10 }),
   pecEmail: varchar('pec_email', { length: 255 }),
   phone: varchar('phone', { length: 30 }),
+  birthDate: varchar('birth_date', { length: 10 }), // formato DD/MM/YYYY
   address: text('address'),
   postcode: varchar('postcode', { length: 10 }),
   city: varchar('city', { length: 100 }),
@@ -210,6 +213,7 @@ export const orderItems = pgTable('order_items', {
   discountPct: decimal('discount_pct', { precision: 5, scale: 2 }).default('0'),
   vatPct: decimal('vat_pct', { precision: 5, scale: 2 }).notNull(),
   lineTotal: decimal('line_total', { precision: 10, scale: 2 }).notNull(),
+  isUrgent: boolean('is_urgent').default(false).notNull(),
 }, (table) => [
   index('order_items_order_idx').on(table.orderId),
   index('order_items_product_idx').on(table.productId),
@@ -233,6 +237,7 @@ export const cartItems = pgTable('cart_items', {
   customerId: integer('customer_id').references(() => customers.id, { onDelete: 'cascade' }).notNull(),
   productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
   qty: integer('qty').notNull().default(1),
+  isUrgent: boolean('is_urgent').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [

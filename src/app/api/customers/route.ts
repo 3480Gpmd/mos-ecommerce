@@ -28,6 +28,7 @@ const registerSchema = z.object({
   sdiCode: emptyToUndefined,
   pecEmail: emptyEmailToUndefined,
   phone: emptyToUndefined,
+  birthDate: emptyToUndefined,
   address: emptyToUndefined,
   postcode: emptyToUndefined,
   city: emptyToUndefined,

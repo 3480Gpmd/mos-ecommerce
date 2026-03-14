@@ -13,6 +13,13 @@ const createOrderSchema = z.object({
   shippingProvince: z.string().min(1).max(2),
   paymentMethod: z.enum(['paypal', 'teamsystem', 'bonifico']),
   notes: z.string().optional(),
+  isUrgent: z.boolean().optional().default(false),
+  altShipping: z.boolean().optional().default(false),
+  altShippingName: z.string().optional(),
+  altShippingAddress: z.string().optional(),
+  altShippingPostcode: z.string().optional(),
+  altShippingCity: z.string().optional(),
+  altShippingProvince: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -105,6 +112,7 @@ export async function POST(req: NextRequest) {
         discountPct: '0',
         vatPct: String(vatPct),
         lineTotal: String(lineTotal.toFixed(2)),
+        isUrgent: cartItem.isUrgent,
       };
     });
 
@@ -133,6 +141,13 @@ export async function POST(req: NextRequest) {
       paymentStatus: 'pending',
       status: 'nuovo',
       notes: parsed.data.notes || null,
+      isUrgent: parsed.data.isUrgent,
+      altShipping: parsed.data.altShipping,
+      altShippingName: parsed.data.altShippingName || null,
+      altShippingAddress: parsed.data.altShippingAddress || null,
+      altShippingPostcode: parsed.data.altShippingPostcode || null,
+      altShippingCity: parsed.data.altShippingCity || null,
+      altShippingProvince: parsed.data.altShippingProvince || null,
     }).returning();
 
     // Create order items
