@@ -46,10 +46,16 @@ export default function RegistratiPage() {
 
     setLoading(true);
     try {
+      // Rimuovi confirmPassword e campi vuoti prima di inviare
+      const { confirmPassword: _, ...payload } = form;
+      const cleanPayload = Object.fromEntries(
+        Object.entries(payload).filter(([, v]) => v !== '')
+      );
+
       const res = await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(cleanPayload),
       });
 
       const data = await res.json();

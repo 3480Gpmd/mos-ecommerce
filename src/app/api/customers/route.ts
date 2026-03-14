@@ -6,22 +6,32 @@ import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 
+// Helper: trasforma stringa vuota in undefined (per campi opzionali)
+const emptyToUndefined = z.preprocess(
+  (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+  z.string().optional(),
+);
+const emptyEmailToUndefined = z.preprocess(
+  (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+  z.string().email().optional(),
+);
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
-  companyName: z.string().optional(),
+  firstName: emptyToUndefined,
+  lastName: emptyToUndefined,
+  companyName: emptyToUndefined,
   customerType: z.enum(['privato', 'azienda']),
-  vatNumber: z.string().optional(),
-  fiscalCode: z.string().optional(),
-  sdiCode: z.string().optional(),
-  pecEmail: z.string().email().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  postcode: z.string().optional(),
-  city: z.string().optional(),
-  province: z.string().optional(),
+  vatNumber: emptyToUndefined,
+  fiscalCode: emptyToUndefined,
+  sdiCode: emptyToUndefined,
+  pecEmail: emptyEmailToUndefined,
+  phone: emptyToUndefined,
+  address: emptyToUndefined,
+  postcode: emptyToUndefined,
+  city: emptyToUndefined,
+  province: emptyToUndefined,
 });
 
 export async function POST(req: NextRequest) {
