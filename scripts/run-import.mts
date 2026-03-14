@@ -22,7 +22,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import {
   products, productGroups, productCategories, productSubcategories, csvImports
-} from '../src/db/schema.ts';
+} from '../src/db/schema';
 import { eq, notInArray, and } from 'drizzle-orm';
 
 function slugify(text: string): string {

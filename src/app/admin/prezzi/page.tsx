@@ -654,7 +654,7 @@ export default function PrezziPage() {
           {discounts.map((d) => (
             <div key={d.id} className="bg-white rounded-xl border border-gray-200 p-5">
               {editingDiscountId === d.id ? (
-                renderDiscountForm(editDiscountForm as typeof newDiscountForm, (v) => setEditDiscountForm(typeof v === 'function' ? v(editDiscountForm as typeof newDiscountForm) : v), async () => {
+                renderDiscountForm(editDiscountForm as unknown as typeof newDiscountForm, (v: unknown) => setEditDiscountForm(typeof v === 'function' ? (v as (prev: Partial<SpecialDiscount>) => Partial<SpecialDiscount>)(editDiscountForm) : v as Partial<SpecialDiscount>), async () => {
                   const payload: Record<string, unknown> = {
                     id: d.id,
                     name: editDiscountForm.name,
