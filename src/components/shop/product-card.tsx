@@ -1,9 +1,93 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Heart } from 'lucide-react';
+import { ShoppingCart, Heart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail } from 'lucide-react';
 import type { Product } from '@/db/schema';
 import { useSession } from 'next-auth/react';
+
+// Mappa gruppo/categoria → icona + colore di sfondo
+function getPlaceholder(product: Product) {
+  const name = (product.name || '').toLowerCase();
+  const brand = (product.brand || '').toLowerCase();
+  const code = (product.code || '').toLowerCase();
+
+  // Bevande fredde
+  if (brand.includes('levissima') || brand.includes('san benedetto') || brand.includes('sant') || brand.includes('vinadio') || name.includes('acqua'))
+    return { Icon: Droplets, bg: 'bg-cyan-50', color: 'text-cyan-400' };
+  if (brand.includes('valfrutta') || brand.includes('yoga') || name.includes('succo') || name.includes('succhi') || name.includes('frutta'))
+    return { Icon: Droplets, bg: 'bg-orange-50', color: 'text-orange-400' };
+
+  // Caffè
+  if (name.includes('caffè') || name.includes('caffe') || name.includes('capsul') || name.includes('cialda') || brand.includes('lavazza') || brand.includes('borbone') || brand.includes('covim') || code.startsWith('lvf'))
+    return { Icon: Coffee, bg: 'bg-amber-50', color: 'text-amber-700' };
+
+  // Consumabili / Toner / Cartucce
+  if (name.includes('toner') || name.includes('cartuccia') || name.includes('inkjet') || name.includes('nastro') || name.includes('ink-jet') || name.includes('drum'))
+    return { Icon: Printer, bg: 'bg-purple-50', color: 'text-purple-400' };
+
+  // Carta
+  if (name.includes('carta') || name.includes('risma') || name.includes('rotolo') || name.includes('foglio') || name.includes('busta'))
+    return { Icon: FileText, bg: 'bg-blue-50', color: 'text-blue-400' };
+
+  // Informatica
+  if (name.includes('mouse') || name.includes('tastiera') || name.includes('usb') || name.includes('monitor') || name.includes('hard') || name.includes('webcam') || name.includes('cavo') || name.includes('hub'))
+    return { Icon: Monitor, bg: 'bg-indigo-50', color: 'text-indigo-400' };
+
+  // Archiviazione
+  if (name.includes('raccoglitor') || name.includes('registrator') || name.includes('cartell') || name.includes('busta') || name.includes('portalist') || name.includes('classificator') || name.includes('scatol') || name.includes('faldone') || name.includes('divisor') || name.includes('dorso'))
+    return { Icon: FolderOpen, bg: 'bg-yellow-50', color: 'text-yellow-500' };
+
+  // Scrittura
+  if (name.includes('penna') || name.includes('matita') || name.includes('evidenziator') || name.includes('pennarello') || name.includes('marker') || name.includes('roller') || name.includes('sfera') || name.includes('gomma') || name.includes('correttor'))
+    return { Icon: PenTool, bg: 'bg-green-50', color: 'text-green-500' };
+
+  // Cancelleria
+  if (name.includes('cucitric') || name.includes('forbic') || name.includes('cutter') || name.includes('punto') || name.includes('perforator') || name.includes('colla') || name.includes('nastro adesivo') || name.includes('scotch'))
+    return { Icon: Scissors, bg: 'bg-pink-50', color: 'text-pink-400' };
+
+  // Macchine ufficio
+  if (name.includes('calcolatric') || name.includes('distrugg') || name.includes('plastificatric') || name.includes('rilegatric') || name.includes('stampant') || name.includes('scanner'))
+    return { Icon: Calculator, bg: 'bg-slate-50', color: 'text-slate-400' };
+
+  // Arredamento
+  if (name.includes('poltrona') || name.includes('sedia') || name.includes('scrivania') || name.includes('armadio') || name.includes('scaffal') || name.includes('cassettier'))
+    return { Icon: Sofa, bg: 'bg-stone-50', color: 'text-stone-400' };
+
+  // Spedizione/imballo
+  if (name.includes('scatol') || name.includes('imballo') || name.includes('film') || name.includes('reggett') || name.includes('bilancia'))
+    return { Icon: Mail, bg: 'bg-teal-50', color: 'text-teal-400' };
+
+  // Pulizia / Comunità
+  if (name.includes('detergent') || name.includes('sapone') || name.includes('carta igien') || name.includes('asciugaman') || name.includes('guant'))
+    return { Icon: Zap, bg: 'bg-emerald-50', color: 'text-emerald-400' };
+
+  // Scuola / Belle arti
+  if (name.includes('quaderno') || name.includes('album') || name.includes('pastello') || name.includes('tempera') || name.includes('acquerell'))
+    return { Icon: Palette, bg: 'bg-fuchsia-50', color: 'text-fuchsia-400' };
+
+  // Giochi
+  if (name.includes('gioco') || name.includes('puzzle'))
+    return { Icon: Gamepad2, bg: 'bg-violet-50', color: 'text-violet-400' };
+
+  // Regalo
+  if (name.includes('regalo') || name.includes('confezione regalo') || name.includes('nastro'))
+    return { Icon: Gift, bg: 'bg-rose-50', color: 'text-rose-400' };
+
+  // Visual / Lavagne
+  if (name.includes('lavagna') || name.includes('bacheca') || name.includes('espositore') || name.includes('proiettor'))
+    return { Icon: Eye, bg: 'bg-sky-50', color: 'text-sky-400' };
+
+  // Cartotecnica
+  if (name.includes('blocco') || name.includes('agenda') || name.includes('registro') || name.includes('modul'))
+    return { Icon: BookOpen, bg: 'bg-lime-50', color: 'text-lime-500' };
+
+  // Garden / Esterni
+  if (name.includes('garden') || name.includes('insetticid') || name.includes('irrigaz'))
+    return { Icon: TreePine, bg: 'bg-green-50', color: 'text-green-600' };
+
+  // Default
+  return { Icon: Package, bg: 'bg-gray-50', color: 'text-gray-300' };
+}
 
 export function ProductCard({ product }: { product: Product }) {
   const { data: session } = useSession();
@@ -31,10 +115,12 @@ export function ProductCard({ product }: { product: Product }) {
     }
   };
 
+  const { Icon, bg, color } = getPlaceholder(product);
+
   return (
     <Link href={`/prodotto/${product.code}`} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200">
       {/* Image */}
-      <div className="relative aspect-square bg-gray-50 p-4">
+      <div className={`relative aspect-square ${product.imageUrl ? 'bg-gray-50' : bg} p-4`}>
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
@@ -43,8 +129,11 @@ export function ProductCard({ product }: { product: Product }) {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <ShoppingCart size={48} />
+          <div className={`w-full h-full flex flex-col items-center justify-center ${color}`}>
+            <Icon size={48} strokeWidth={1.5} />
+            {product.brand && (
+              <span className="mt-2 text-xs font-medium opacity-60 text-center line-clamp-1">{product.brand}</span>
+            )}
           </div>
         )}
         {product.isPromo && (
