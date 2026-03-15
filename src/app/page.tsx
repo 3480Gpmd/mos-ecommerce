@@ -9,49 +9,54 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
       <main className="flex-1">
-        {/* Hero fullscreen */}
-        <section className="relative h-[80vh] min-h-[500px] max-h-[800px] flex items-center">
-          {/* Immagine di sfondo */}
-          <Image
-            src="/Home 1b2.png"
-            alt="Milano Offre Servizi"
-            fill
-            className="object-cover object-bottom"
-            priority
-          />
-          {/* Gradiente leggero per leggibilità testo */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-transparent" />
-          {/* Testo */}
-          <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full -mt-10">
-            <div className="max-w-2xl">
-              <Image
-                src="/logo-light.png"
-                alt="MOS Milano Offre Servizi"
-                width={280}
-                height={120}
-                className="mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]"
-              />
-              <p className="font-heading text-[1.4rem] md:text-[1.65rem] font-bold leading-snug mb-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                Tutto per il tuo ufficio da un unico fornitore.
-                <br />
-                Caffè, acqua e cancelleria consegnati in 48 ore.
-              </p>
-              <p className="text-sm md:text-base text-white/70 mb-8 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
-                Forniture per ufficio, caffè e acqua per aziende e privati. Oltre 25.000 prodotti a prezzi competitivi.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/catalogo"
-                  className="inline-flex items-center gap-2 bg-white text-navy font-bold px-7 py-3.5 rounded-lg hover:bg-gray-100 transition-colors text-lg"
-                >
-                  Sfoglia il catalogo <ArrowRight size={20} />
-                </Link>
-                <Link
-                  href="/registrati"
-                  className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white/15 font-medium px-7 py-3.5 rounded-lg transition-colors text-lg"
-                >
-                  Registrati gratis
-                </Link>
+        {/* Hero sfalsato con overlap */}
+        <section className="bg-gray-50 py-12 md:py-20 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 md:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-6 md:gap-0">
+              {/* Blocco testo con cornice */}
+              <div className="md:col-span-5 bg-white border border-gray-200 rounded-2xl p-8 md:p-12 relative z-10 md:translate-y-8 shadow-lg">
+                <Image
+                  src="/logo-dark.jpg"
+                  alt="MOS Milano Offre Servizi"
+                  width={220}
+                  height={90}
+                  className="mb-6"
+                  priority
+                />
+                <p className="font-heading text-[1.25rem] md:text-[1.5rem] font-bold leading-snug mb-3 text-navy">
+                  Tutto per il tuo ufficio da un unico fornitore.
+                  <br />
+                  Caffè, acqua e cancelleria consegnati in 48 ore.
+                </p>
+                <p className="text-sm text-gray-500 mb-8">
+                  Forniture per ufficio, caffè e acqua per aziende e privati. Oltre 25.000 prodotti a prezzi competitivi.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/catalogo"
+                    className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors"
+                  >
+                    Sfoglia il catalogo <ArrowRight size={18} />
+                  </Link>
+                  <Link
+                    href="/registrati"
+                    className="inline-flex items-center gap-2 border-2 border-navy/20 text-navy hover:bg-gray-50 font-medium px-6 py-3 rounded-lg transition-colors"
+                  >
+                    Registrati gratis
+                  </Link>
+                </div>
+              </div>
+              {/* Blocco foto sfalsato */}
+              <div className="md:col-span-7 md:-ml-8 md:-mt-8">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                  <Image
+                    src="/Home 1b2.png"
+                    alt="Milano Offre Servizi"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 768px) 100vw, 58vw"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -90,18 +95,18 @@ export default function HomePage() {
         <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4">
             <h2 className="font-heading text-2xl font-bold text-gray-800 mb-6">I nostri servizi</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <Link href="/catalogo" className="group bg-white border border-gray-200 rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all">
+            <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 -mx-4 px-4 scrollbar-hide">
+              <Link href="/catalogo" className="group bg-white border border-gray-200 rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all snap-start shrink-0 w-[80%] sm:w-[calc(33.333%-1rem)] sm:shrink">
                 <div className="text-blue mb-4 flex justify-center"><Printer size={48} /></div>
                 <h3 className="font-heading text-lg font-bold text-gray-800 mb-2">Forniture Ufficio</h3>
                 <p className="text-sm text-gray-500">Oltre 25.000 prodotti: consumabili, carta, informatica e molto altro.</p>
               </Link>
-              <Link href="/catalogo?group=caffe-e-bevande-calde" className="group bg-white border border-gray-200 rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all">
+              <Link href="/catalogo?group=caffe-e-bevande-calde" className="group bg-white border border-gray-200 rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all snap-start shrink-0 w-[80%] sm:w-[calc(33.333%-1rem)] sm:shrink">
                 <div className="text-blue mb-4 flex justify-center"><Coffee size={48} /></div>
                 <h3 className="font-heading text-lg font-bold text-gray-800 mb-2">Caffè</h3>
                 <p className="text-sm text-gray-500">Lavazza, Borbone, Covim, Toraldo, Gise. Cialde, capsule e grani.</p>
               </Link>
-              <Link href="/catalogo?group=bevande-fredde" className="group bg-white border border-gray-200 rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all">
+              <Link href="/catalogo?group=bevande-fredde" className="group bg-white border border-gray-200 rounded-xl p-8 text-center hover:shadow-lg hover:border-blue transition-all snap-start shrink-0 w-[80%] sm:w-[calc(33.333%-1rem)] sm:shrink">
                 <div className="text-blue mb-4 flex justify-center"><Droplets size={48} /></div>
                 <h3 className="font-heading text-lg font-bold text-gray-800 mb-2">Servizio Acqua</h3>
                 <p className="text-sm text-gray-500">Acqua, succhi, bibite e bevande fredde. Levissima, San Benedetto, Valfrutta e altre.</p>
