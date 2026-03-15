@@ -478,6 +478,18 @@ export const customerNotesRelations = relations(customerNotes, ({ one }) => ({
   customer: one(customers, { fields: [customerNotes.customerId], references: [customers.id] }),
 }));
 
+// ─── Abandoned cart tracking ──────────────────────────────────────
+
+export const cartAbandonmentEmails = pgTable('cart_abandonment_emails', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').references(() => customers.id, { onDelete: 'cascade' }).notNull(),
+  emailType: varchar('email_type', { length: 30 }).notNull(), // 'customer_reminder' | 'admin_notification'
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+}, (table) => [
+  index('cart_abandonment_customer_idx').on(table.customerId),
+  index('cart_abandonment_type_idx').on(table.emailType),
+]);
+
 // ─── Types ─────────────────────────────────────────────────────────
 
 export type Product = typeof products.$inferSelect;

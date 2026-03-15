@@ -79,6 +79,99 @@ export function passwordResetEmail(resetUrl: string) {
   };
 }
 
+export function abandonedCartCustomerEmail(customerName: string, items: { name: string; qty: number; priceNet: string }[]) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mos-ecommerce.vercel.app';
+  const itemsHtml = items.map((i) =>
+    `<tr><td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${i.name}</td><td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: center;">${i.qty}</td><td style="padding: 8px 12px; border-bottom: 1px solid #eee; text-align: right;">&euro; ${parseFloat(i.priceNet).toFixed(2)}</td></tr>`
+  ).join('');
+
+  return {
+    subject: 'Hai dimenticato qualcosa nel carrello! - Milano Offre Servizi',
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+  <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #1d4ed8;">
+    <h1 style="color: #0f1923; margin: 0; font-size: 24px;">Milano Offre Servizi</h1>
+  </div>
+
+  <div style="padding: 30px 0;">
+    <h2 style="color: #0f1923;">Ciao ${customerName},</h2>
+    <p>Abbiamo notato che hai lasciato dei prodotti nel carrello. Ecco un riepilogo:</p>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <thead>
+        <tr style="background: #f8f9fa;">
+          <th style="padding: 10px 12px; text-align: left; font-size: 13px; color: #666;">Prodotto</th>
+          <th style="padding: 10px 12px; text-align: center; font-size: 13px; color: #666;">Qtà</th>
+          <th style="padding: 10px 12px; text-align: right; font-size: 13px; color: #666;">Prezzo</th>
+        </tr>
+      </thead>
+      <tbody>${itemsHtml}</tbody>
+    </table>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${appUrl}/carrello"
+         style="background-color: #1d4ed8; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+        Completa il tuo ordine
+      </a>
+    </div>
+
+    <p style="font-size: 13px; color: #666;">
+      I prodotti nel carrello potrebbero non essere disponibili a lungo. Completa l'ordine per assicurarti la consegna.
+    </p>
+  </div>
+
+  <div style="border-top: 1px solid #eee; padding-top: 15px; font-size: 12px; color: #999; text-align: center;">
+    <p>Milano Offre Servizi S.r.l.<br>Questa è un'email automatica, non rispondere.</p>
+  </div>
+</body>
+</html>`,
+  };
+}
+
+export function abandonedCartAdminEmail(customerName: string, customerEmail: string, items: { name: string; qty: number; priceNet: string }[]) {
+  const itemsList = items.map((i) => `- ${i.name} (x${i.qty}) - € ${parseFloat(i.priceNet).toFixed(2)}`).join('<br>');
+  const totalEstimate = items.reduce((sum, i) => sum + parseFloat(i.priceNet) * i.qty, 0);
+
+  return {
+    subject: `Carrello abbandonato: ${customerName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+  <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #dc2626;">
+    <h1 style="color: #0f1923; margin: 0; font-size: 24px;">Notifica Carrello Abbandonato</h1>
+  </div>
+
+  <div style="padding: 30px 0;">
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <p style="margin: 0; font-weight: bold; color: #991b1b;">Il cliente ${customerName} ha abbandonato il carrello</p>
+      <p style="margin: 8px 0 0; color: #666;">Email: ${customerEmail}</p>
+    </div>
+
+    <h3 style="color: #0f1923;">Prodotti nel carrello:</h3>
+    <p style="line-height: 1.8;">${itemsList}</p>
+
+    <p style="font-weight: bold; color: #0f1923; font-size: 16px;">
+      Valore stimato: &euro; ${totalEstimate.toFixed(2)} + IVA
+    </p>
+
+    <p style="font-size: 13px; color: #666; margin-top: 20px;">
+      Al cliente è stata inviata un'email di promemoria. Potrebbe essere opportuno contattarlo direttamente.
+    </p>
+  </div>
+
+  <div style="border-top: 1px solid #eee; padding-top: 15px; font-size: 12px; color: #999; text-align: center;">
+    <p>Notifica automatica dal sistema MOS E-commerce</p>
+  </div>
+</body>
+</html>`,
+  };
+}
+
 export function welcomeEmail(name: string) {
   return {
     subject: 'Benvenuto su Milano Offre Servizi!',

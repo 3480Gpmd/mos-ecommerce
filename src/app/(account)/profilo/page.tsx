@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Package, Heart, Settings } from 'lucide-react';
+import { User, LogOut, Package, Heart, Settings, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/ui/page-title';
 import { useEffect } from 'react';
@@ -54,6 +54,12 @@ export default function ProfiloPage() {
           <div className="flex items-center gap-3">
             <Heart size={20} className="text-gray-500" />
             <span className="font-medium">Preferiti</span>
+          </div>
+        </Link>
+        <Link href="/riordina" className="flex items-center justify-between bg-white border rounded-xl p-4 hover:shadow-sm transition-shadow">
+          <div className="flex items-center gap-3">
+            <RotateCcw size={20} className="text-gray-500" />
+            <span className="font-medium">Riordina</span>
           </div>
         </Link>
         {isAdmin && (

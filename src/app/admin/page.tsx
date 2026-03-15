@@ -1,17 +1,23 @@
 import { db } from '@/db';
 import { orders, customers, products, csvImports, customerNotes, quoteRequests } from '@/db/schema';
-import { eq, sql, desc, and, lte } from 'drizzle-orm';
+import { eq, sql, desc, and, lte, gte, lt } from 'drizzle-orm';
 import Link from 'next/link';
 import {
   Package, Users, ShoppingCart, TrendingUp, Tag, FolderTree,
   Upload, FileText, Settings, Search, BarChart3, Bell, ClipboardList,
+  AlertTriangle, UserMinus, Crown, ShoppingBag,
 } from 'lucide-react';
+import { cartItems } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
   const sevenDaysFromNow = new Date();
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
   const [
     orderCount,
@@ -22,6 +28,9 @@ export default async function AdminDashboard() {
     revenue,
     upcomingReminders,
     newQuoteCount,
+    topCustomers,
+    inactiveCount,
+    abandonedCartCount,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(orders),
     db.select({ count: sql<number>`count(*)` }).from(customers),
@@ -42,6 +51,31 @@ export default async function AdminDashboard() {
       .orderBy(customerNotes.reminderDate)
       .limit(5),
     db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.status, 'nuovo')),
+    // Top 5 clienti per fatturato mese corrente
+    db.select({
+      customerName: orders.customerName,
+      customerEmail: orders.customerEmail,
+      totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)::text`,
+      orderCount: sql<number>`count(*)`,
+    })
+      .from(orders)
+      .where(gte(orders.createdAt, thisMonthStart))
+      .groupBy(orders.customerName, orders.customerEmail)
+      .orderBy(desc(sql`SUM(${orders.total}::numeric)`))
+      .limit(5),
+    // Clienti inattivi (60+ giorni)
+    db.execute(sql`
+      SELECT COUNT(DISTINCT sub.cid) as count FROM (
+        SELECT ${orders.customerId} as cid, MAX(${orders.createdAt}) as last_order
+        FROM ${orders}
+        GROUP BY ${orders.customerId}
+        HAVING MAX(${orders.createdAt}) < ${sixtyDaysAgo}
+      ) sub
+    `),
+    // Carrelli abbandonati attivi (2+ ore)
+    db.select({ count: sql<number>`COUNT(DISTINCT ${cartItems.customerId})` })
+      .from(cartItems)
+      .where(lt(cartItems.updatedAt, new Date(Date.now() - 2 * 60 * 60 * 1000))),
   ]);
 
   const stats = [
@@ -169,6 +203,55 @@ export default async function AdminDashboard() {
             <p className="text-2xl font-bold text-navy">{typeof stat.value === 'number' ? stat.value.toLocaleString('it-IT') : stat.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Analytics rapidi */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* Top clienti mese */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-3">
+            <Crown size={18} className="text-yellow-500" />
+            <h3 className="font-heading font-bold text-navy text-sm">Top clienti (mese)</h3>
+          </div>
+          {topCustomers.length > 0 ? (
+            <div className="space-y-2">
+              {topCustomers.map((c, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700 truncate max-w-[60%]">{c.customerName || c.customerEmail}</span>
+                  <span className="font-medium text-navy">
+                    {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(parseFloat(c.totalSpent))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">Nessun ordine questo mese</p>
+          )}
+        </div>
+
+        {/* Alert clienti */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-3">
+            <UserMinus size={18} className="text-red" />
+            <h3 className="font-heading font-bold text-navy text-sm">Clienti inattivi</h3>
+          </div>
+          <p className="text-3xl font-bold text-navy mb-1">
+            {Number((inactiveCount as { rows?: { count: number }[] })?.rows?.[0]?.count || 0)}
+          </p>
+          <p className="text-xs text-gray-500">Non ordinano da 60+ giorni</p>
+        </div>
+
+        {/* Carrelli abbandonati */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-3">
+            <ShoppingBag size={18} className="text-orange-500" />
+            <h3 className="font-heading font-bold text-navy text-sm">Carrelli abbandonati</h3>
+          </div>
+          <p className="text-3xl font-bold text-navy mb-1">
+            {Number(abandonedCartCount[0]?.count || 0)}
+          </p>
+          <p className="text-xs text-gray-500">Clienti con carrello da 2+ ore</p>
+        </div>
       </div>
 
       {/* Module cards - stile Intershop */}

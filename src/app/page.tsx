@@ -9,44 +9,49 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
       <main className="flex-1">
-        {/* Hero */}
-        <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16 md:py-24">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              {/* Testo */}
-              <div>
-                <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-navy">
-                  Tutto per il tuo <span className="text-red">ufficio</span>, consegnato in 48h tramite corriere espresso
-                </h1>
-                <p className="text-lg text-gray-500 mb-8">
-                  Forniture per ufficio, caffè e acqua per aziende e privati. Oltre 25.000 prodotti a prezzi competitivi.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/catalogo"
-                    className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors"
-                  >
-                    Sfoglia il catalogo <ArrowRight size={18} />
-                  </Link>
-                  <Link
-                    href="/registrati"
-                    className="inline-flex items-center gap-2 border-2 border-blue text-blue hover:bg-blue hover:text-white font-medium px-6 py-3 rounded-lg transition-colors"
-                  >
-                    Registrati gratis
-                  </Link>
-                </div>
-              </div>
-              {/* Foto */}
-              <div className="hidden md:flex justify-center">
-                <div className="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gray-200">
-                  <Image
-                    src="/Home 1b.png"
-                    alt="Davide - Milano Offre Servizi"
-                    fill
-                    className="object-cover object-top"
-                    priority
-                  />
-                </div>
+        {/* Hero fullscreen */}
+        <section className="relative h-[80vh] min-h-[500px] max-h-[800px] flex items-center">
+          {/* Immagine di sfondo */}
+          <Image
+            src="/Home 1b2.png"
+            alt="Milano Offre Servizi"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+          {/* Gradiente leggero per leggibilità testo */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-transparent" />
+          {/* Testo */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full -mt-10">
+            <div className="max-w-2xl">
+              <Image
+                src="/logo-light.png"
+                alt="MOS Milano Offre Servizi"
+                width={280}
+                height={120}
+                className="mb-6 drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]"
+              />
+              <p className="font-heading text-[1.4rem] md:text-[1.65rem] font-bold leading-snug mb-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+                Tutto per il tuo ufficio da un unico fornitore.
+                <br />
+                Caffè, acqua e cancelleria consegnati in 48 ore.
+              </p>
+              <p className="text-sm md:text-base text-white/70 mb-8 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+                Forniture per ufficio, caffè e acqua per aziende e privati. Oltre 25.000 prodotti a prezzi competitivi.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/catalogo"
+                  className="inline-flex items-center gap-2 bg-white text-navy font-bold px-7 py-3.5 rounded-lg hover:bg-gray-100 transition-colors text-lg"
+                >
+                  Sfoglia il catalogo <ArrowRight size={20} />
+                </Link>
+                <Link
+                  href="/registrati"
+                  className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white/15 font-medium px-7 py-3.5 rounded-lg transition-colors text-lg"
+                >
+                  Registrati gratis
+                </Link>
               </div>
             </div>
           </div>
