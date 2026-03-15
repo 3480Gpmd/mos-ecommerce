@@ -16,7 +16,7 @@ export default function HomePage() {
             src="/Home 1b2.png"
             alt="Milano Offre Servizi"
             fill
-            className="object-cover object-center"
+            className="object-cover object-bottom"
             priority
           />
           {/* Gradiente leggero per leggibilità testo */}
