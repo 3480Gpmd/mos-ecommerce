@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Coffee, Clock, Wrench, Truck, BarChart3, CheckCircle2 } from 'lucide-react';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -30,17 +31,24 @@ export default function LavazzaFirmaPage() {
       <Header />
       <main className="flex-1">
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
-          <div className="max-w-4xl mx-auto px-4">
-            <PageTitle className="mb-4">Lavazza Firma in Comodato d&apos;Uso</PageTitle>
-            <p className="text-lg text-gray-600 mb-2 max-w-2xl">
-              Caffè di qualità per ambienti di lavoro che considerano il servizio l&apos;aspetto più importante.
-            </p>
-            <p className="text-gray-500 mb-8 max-w-2xl">
-              Installiamo macchine Lavazza Firma nel tuo ufficio con manutenzione, assistenza e rifornimenti programmati inclusi. Installazione media entro 5 giorni lavorativi.
-            </p>
-            <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
-              Richiedi un preventivo <ArrowRight size={18} />
-            </Link>
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div>
+                <PageTitle className="mb-4">Lavazza Firma in Comodato d&apos;Uso</PageTitle>
+                <p className="text-lg text-gray-600 mb-2">
+                  Caffè di qualità per ambienti di lavoro che considerano il servizio l&apos;aspetto più importante.
+                </p>
+                <p className="text-gray-500 mb-8">
+                  Installiamo macchine Lavazza Firma nel tuo ufficio con manutenzione, assistenza e rifornimenti programmati inclusi. Installazione media entro 5 giorni lavorativi.
+                </p>
+                <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                  Richiedi un preventivo <ArrowRight size={18} />
+                </Link>
+              </div>
+              <div className="flex justify-center">
+                <Image src="/servizi/lavazza-firma.png" alt="Lavazza Firma macchina" width={400} height={400} className="rounded-2xl shadow-xl" />
+              </div>
+            </div>
           </div>
         </section>
 

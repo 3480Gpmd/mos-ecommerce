@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Coffee, Droplets, Leaf, Palette, Volume2, Zap } from 'lucide-react';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -34,17 +35,25 @@ export default function BevandeGisePage() {
       <Header />
       <main className="flex-1">
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
-          <div className="max-w-4xl mx-auto px-4">
-            <PageTitle className="mb-4">Gise Aura</PageTitle>
-            <p className="text-lg text-gray-600 mb-2 max-w-2xl">
-              La gamma di bevande calde più completa: oltre 20 varianti tra caffè, ginseng, cioccolata e tisane senza zucchero.
-            </p>
-            <p className="text-gray-500 mb-8 max-w-2xl">
-              Macchina Aura in comodato d&apos;uso con capsule originali e riconoscimento automatico. Perfetta per famiglie e uffici che vogliono accontentare tutti i gusti.
-            </p>
-            <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
-              Richiedi un preventivo <ArrowRight size={18} />
-            </Link>
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div>
+                <PageTitle className="mb-4">Gise Aura</PageTitle>
+                <p className="text-lg text-gray-600 mb-2">
+                  La gamma di bevande calde più completa: oltre 20 varianti tra caffè, ginseng, cioccolata e tisane senza zucchero.
+                </p>
+                <p className="text-gray-500 mb-8">
+                  Macchina Aura in comodato d&apos;uso con capsule originali e riconoscimento automatico. Perfetta per famiglie e uffici che vogliono accontentare tutti i gusti.
+                </p>
+                <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                  Richiedi un preventivo <ArrowRight size={18} />
+                </Link>
+              </div>
+              <div className="flex gap-6 justify-center">
+                <Image src="/servizi/aura-lat.webp" alt="Gise Aura laterale" width={200} height={280} className="rounded-xl shadow-lg" />
+                <Image src="/servizi/aura-front.webp" alt="Gise Aura frontale" width={200} height={280} className="rounded-xl shadow-lg mt-6" />
+              </div>
+            </div>
           </div>
         </section>
 

@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Coffee, Building2, Home, Store, UtensilsCrossed, PartyPopper, Clock, Wrench, Truck, BarChart3 } from 'lucide-react';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -30,17 +31,37 @@ export default function MacchineCaffeComodatoPage() {
       <Header />
       <main className="flex-1">
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
-          <div className="max-w-4xl mx-auto px-4">
-            <PageTitle className="mb-4">Macchine del Caffè in Comodato d&apos;Uso</PageTitle>
-            <p className="text-lg text-gray-600 mb-2 max-w-2xl">
-              Il caffè giusto nel posto giusto: a casa, in ufficio, per eventi e nel tuo locale.
-            </p>
-            <p className="text-gray-500 mb-8 max-w-2xl">
-              Ti forniamo la macchina senza costi di acquisto. Rimane di nostra proprietà, tu paghi solo i consumi secondo il piano scelto. Installazione, manutenzione e rifornimenti sono inclusi.
-            </p>
-            <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
-              Richiedi un preventivo <ArrowRight size={18} />
-            </Link>
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div>
+                <PageTitle className="mb-4">Macchine del Caffè in Comodato d&apos;Uso</PageTitle>
+                <p className="text-lg text-gray-600 mb-2">
+                  Il caffè giusto nel posto giusto: a casa, in ufficio, per eventi e nel tuo locale.
+                </p>
+                <p className="text-gray-500 mb-8">
+                  Ti forniamo la macchina senza costi di acquisto. Rimane di nostra proprietà, tu paghi solo i consumi secondo il piano scelto. Installazione, manutenzione e rifornimenti sono inclusi.
+                </p>
+                <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                  Richiedi un preventivo <ArrowRight size={18} />
+                </Link>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <Image src="/servizi/bluemoon-home.png" alt="Macchina caffè Bluemoon" width={200} height={300} className="rounded-xl shadow-lg" />
+                <Image src="/servizi/dr-coffee.png" alt="Dr. Coffee" width={200} height={300} className="rounded-xl shadow-lg mt-8" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Gallery macchine */}
+        <section className="py-10 bg-white">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 scrollbar-hide justify-center">
+              <Image src="/servizi/macchine-slider2.png" alt="Macchina caffè per ufficio" width={250} height={250} className="rounded-xl shadow-md snap-start shrink-0" />
+              <Image src="/servizi/macchina-home-x4.png" alt="Macchina Home X4" width={250} height={250} className="rounded-xl shadow-md snap-start shrink-0" />
+              <Image src="/servizi/bluemoon-home.png" alt="Bluemoon Home" width={250} height={250} className="rounded-xl shadow-md snap-start shrink-0" />
+              <Image src="/servizi/dr-coffee.png" alt="Dr. Coffee Center" width={250} height={250} className="rounded-xl shadow-md snap-start shrink-0" />
+            </div>
           </div>
         </section>
 

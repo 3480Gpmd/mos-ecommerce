@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Droplets, Wifi, Package, Clock, Wrench, CheckCircle2 } from 'lucide-react';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -22,17 +23,25 @@ export default function DispenserBoccioniPage() {
       <Header />
       <main className="flex-1">
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
-          <div className="max-w-4xl mx-auto px-4">
-            <PageTitle className="mb-4">Dispenser, Boccioni e Acqua a Rete</PageTitle>
-            <p className="text-lg text-gray-600 mb-2 max-w-2xl">
-              Installiamo dispenser con boccioni o allacciati alla rete idrica e impianti di filtrazione.
-            </p>
-            <p className="text-gray-500 mb-8 max-w-2xl">
-              Forniamo filtri e CO₂ quando serve e rifornimenti programmati. Se il dispenser è disponibile, entro 48 ore sei operativo.
-            </p>
-            <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
-              Richiedi un preventivo <ArrowRight size={18} />
-            </Link>
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div>
+                <PageTitle className="mb-4">Dispenser, Boccioni e Acqua a Rete</PageTitle>
+                <p className="text-lg text-gray-600 mb-2">
+                  Installiamo dispenser con boccioni o allacciati alla rete idrica e impianti di filtrazione.
+                </p>
+                <p className="text-gray-500 mb-8">
+                  Forniamo filtri e CO₂ quando serve e rifornimenti programmati. Se il dispenser è disponibile, entro 48 ore sei operativo.
+                </p>
+                <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                  Richiedi un preventivo <ArrowRight size={18} />
+                </Link>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <Image src="/servizi/dispenser-rete.png" alt="Dispenser a rete idrica" width={250} height={350} className="rounded-xl shadow-lg" />
+                <Image src="/servizi/dispenser-boccioni.png" alt="Dispenser con boccioni" width={200} height={300} className="rounded-xl shadow-lg mt-8" />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -41,6 +50,7 @@ export default function DispenserBoccioniPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Rete idrica */}
               <div className="border border-gray-200 rounded-2xl p-8">
+                <Image src="/servizi/dispenser-rete.png" alt="Dispenser rete idrica" width={300} height={200} className="rounded-xl mx-auto mb-6" />
                 <div className="flex items-center gap-3 mb-4">
                   <Wifi size={28} className="text-blue" />
                   <h2 className="font-heading text-xl font-bold text-navy">Collegati alla rete idrica</h2>
@@ -56,6 +66,7 @@ export default function DispenserBoccioniPage() {
 
               {/* Boccioni */}
               <div className="border border-gray-200 rounded-2xl p-8">
+                <Image src="/servizi/dispenser-boccioni.png" alt="Dispenser con boccioni" width={300} height={200} className="rounded-xl mx-auto mb-6" />
                 <div className="flex items-center gap-3 mb-4">
                   <Package size={28} className="text-blue" />
                   <h2 className="font-heading text-xl font-bold text-navy">Dispenser con boccioni</h2>

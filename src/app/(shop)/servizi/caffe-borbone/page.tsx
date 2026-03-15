@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Coffee, Leaf, Sparkles, Wrench, Truck } from 'lucide-react';
 import { PageTitle } from '@/components/ui/page-title';
 
@@ -11,12 +12,12 @@ export const metadata = {
 
 export default function CaffeBorbonePage() {
   const miscele = [
-    { nome: 'Miscela NERA', desc: 'Cremoso, tostato al punto giusto, corpo deciso.' },
-    { nome: 'Miscela ROSSA', desc: 'Energica e intensa, per chi ama il gusto forte.' },
-    { nome: 'Miscela BLU', desc: 'Equilibrata, la tradizione del caffè napoletano.' },
-    { nome: 'Miscela ORO', desc: 'Dolce, morbida, adatta ad ogni momento della giornata.' },
-    { nome: 'Miscela DEK', desc: 'Decaffeinato leggero con la stessa cremosità.' },
-    { nome: 'Miscela LIGHT', desc: 'Equilibrio perfetto tra Blu e Dek.' },
+    { nome: 'Miscela NERA', desc: 'Cremoso, tostato al punto giusto, corpo deciso.', img: '/servizi/cialda-nera.png' },
+    { nome: 'Miscela ROSSA', desc: 'Energica e intensa, per chi ama il gusto forte.', img: '/servizi/cialda-rossa.png' },
+    { nome: 'Miscela BLU', desc: 'Equilibrata, la tradizione del caffè napoletano.', img: '/servizi/cialda-blu.png' },
+    { nome: 'Miscela ORO', desc: 'Dolce, morbida, adatta ad ogni momento della giornata.', img: '/servizi/cialda-oro.png' },
+    { nome: 'Miscela DEK', desc: 'Decaffeinato leggero con la stessa cremosità.', img: '/servizi/cialda-dek.png' },
+    { nome: 'Miscela LIGHT', desc: 'Equilibrio perfetto tra Blu e Dek.', img: null },
   ];
 
   return (
@@ -24,17 +25,25 @@ export default function CaffeBorbonePage() {
       <Header />
       <main className="flex-1">
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
-          <div className="max-w-4xl mx-auto px-4">
-            <PageTitle className="mb-4">Caffè Borbone</PageTitle>
-            <p className="text-lg text-gray-600 mb-2 max-w-2xl">
-              L&apos;autentico espresso napoletano a casa tua e in ufficio.
-            </p>
-            <p className="text-gray-500 mb-8 max-w-2xl">
-              Macchina Bluemoon in comodato d&apos;uso con cialde ESE compostabili. Servizio completo: installazione, manutenzione, fornitura cialde e assistenza tecnica.
-            </p>
-            <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
-              Richiedi un preventivo <ArrowRight size={18} />
-            </Link>
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div>
+                <PageTitle className="mb-4">Caffè Borbone</PageTitle>
+                <p className="text-lg text-gray-600 mb-2">
+                  L&apos;autentico espresso napoletano a casa tua e in ufficio.
+                </p>
+                <p className="text-gray-500 mb-8">
+                  Macchina Bluemoon in comodato d&apos;uso con cialde ESE compostabili. Servizio completo: installazione, manutenzione, fornitura cialde e assistenza tecnica.
+                </p>
+                <Link href="/aziende" className="inline-flex items-center gap-2 bg-blue hover:bg-blue-light text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                  Richiedi un preventivo <ArrowRight size={18} />
+                </Link>
+              </div>
+              <div className="flex gap-4 justify-center items-end">
+                <Image src="/servizi/bluemoon3.png" alt="Macchina Bluemoon" width={180} height={280} className="rounded-xl shadow-lg" />
+                <Image src="/servizi/bluemoon-home5.png" alt="Bluemoon Home" width={220} height={320} className="rounded-xl shadow-lg" />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -75,7 +84,8 @@ export default function CaffeBorbonePage() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {miscele.map((m) => (
-                <div key={m.nome} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                <div key={m.nome} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow text-center">
+                  {m.img && <Image src={m.img} alt={m.nome} width={120} height={120} className="mx-auto mb-3" />}
                   <h3 className="font-bold text-navy mb-1 text-sm">{m.nome}</h3>
                   <p className="text-xs text-gray-500">{m.desc}</p>
                 </div>
