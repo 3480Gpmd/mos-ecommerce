@@ -175,6 +175,113 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4">
           {/* Desktop menu - una riga con mega-menu catalogo */}
           <ul className="hidden md:flex items-center gap-0">
+            {/* Caffè e Bevande Calde */}
+            {caffeGroup && (
+              <li
+                className="relative"
+                onMouseEnter={handleCaffeEnter}
+                onMouseLeave={handleCaffeLeave}
+              >
+                <button
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-white/10 hover:bg-white/20 rounded transition-colors"
+                >
+                  <Coffee size={18} />
+                  Caffè e Bevande Calde
+                  <ChevronDown size={14} className={`transition-transform ${caffeOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {caffeOpen && (
+                  <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
+                    <div className="mb-2">
+                      <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Servizi</span>
+                      <ul className="space-y-1">
+                        <li><Link href="/servizi/macchine-caffe-comodato" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Macchine del caffè in comodato</Link></li>
+                        <li><Link href="/servizi/lavazza-firma" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Lavazza Firma</Link></li>
+                        <li><Link href="/servizi/caffe-borbone" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Caffè Borbone</Link></li>
+                        <li><Link href="/servizi/bevande-gise" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Bevande Gise</Link></li>
+                      </ul>
+                    </div>
+                    <div className="border-t border-gray-100 pt-2">
+                      <Link
+                        href={`/catalogo?group=${caffeGroup.slug}`}
+                        className="block text-sm font-bold text-navy hover:text-blue transition-colors mb-2"
+                        onClick={() => setCaffeOpen(false)}
+                      >
+                        Tutti i prodotti
+                      </Link>
+                      {caffeGroup.categories.length > 0 && (
+                        <ul className="space-y-1">
+                          {caffeGroup.categories.map((cat) => (
+                            <li key={cat.id}>
+                              <Link
+                                href={`/catalogo?group=${caffeGroup.slug}&category=${cat.slug}`}
+                                className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors"
+                                onClick={() => setCaffeOpen(false)}
+                              >
+                                {titleCase(cat.name)}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </li>
+            )}
+
+            {/* Bevande Fredde */}
+            {freddeGroup && (
+              <li
+                className="relative"
+                onMouseEnter={handleFreddeEnter}
+                onMouseLeave={handleFreddeLeave}
+              >
+                <button
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 rounded transition-colors"
+                >
+                  <GlassWater size={18} />
+                  Bevande Fredde
+                  <ChevronDown size={14} className={`transition-transform ${freddeOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {freddeOpen && (
+                  <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
+                    <div className="mb-2">
+                      <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Servizi</span>
+                      <ul className="space-y-1">
+                        <li><Link href="/servizi/dispenser-boccioni" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setFreddeOpen(false)}>Dispenser e boccioni</Link></li>
+                      </ul>
+                    </div>
+                    <div className="border-t border-gray-100 pt-2">
+                      <Link
+                        href={`/catalogo?group=${freddeGroup.slug}`}
+                        className="block text-sm font-bold text-navy hover:text-blue transition-colors mb-2"
+                        onClick={() => setFreddeOpen(false)}
+                      >
+                        Tutti i prodotti
+                      </Link>
+                      {freddeGroup.categories.length > 0 && (
+                        <ul className="space-y-1">
+                          {freddeGroup.categories.map((cat) => (
+                            <li key={cat.id}>
+                              <Link
+                                href={`/catalogo?group=${freddeGroup.slug}&category=${cat.slug}`}
+                                className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors"
+                                onClick={() => setFreddeOpen(false)}
+                              >
+                                {titleCase(cat.name)}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </li>
+            )}
+
             {/* Catalogo con mega-menu */}
             <li
               className="relative"
@@ -182,7 +289,7 @@ export function Header() {
               onMouseLeave={handleCatalogLeave}
             >
               <button
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-white/10 hover:bg-white/20 rounded transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 rounded transition-colors"
               >
                 <LayoutGrid size={18} />
                 Catalogo
@@ -234,94 +341,6 @@ export function Header() {
                 </div>
               )}
             </li>
-
-            {/* Caffè e Bevande */}
-            {caffeGroup && (
-              <li
-                className="relative"
-                onMouseEnter={handleCaffeEnter}
-                onMouseLeave={handleCaffeLeave}
-              >
-                <button
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 rounded transition-colors"
-                >
-                  <Coffee size={18} />
-                  Caffè e Bevande Calde
-                  <ChevronDown size={14} className={`transition-transform ${caffeOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {caffeOpen && (
-                  <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
-                    <Link
-                      href={`/catalogo?group=${caffeGroup.slug}`}
-                      className="block text-sm font-bold text-navy hover:text-blue transition-colors mb-2"
-                      onClick={() => setCaffeOpen(false)}
-                    >
-                      Tutti i prodotti
-                    </Link>
-                    {caffeGroup.categories.length > 0 && (
-                      <ul className="space-y-1 border-t border-gray-100 pt-2">
-                        {caffeGroup.categories.map((cat) => (
-                          <li key={cat.id}>
-                            <Link
-                              href={`/catalogo?group=${caffeGroup.slug}&category=${cat.slug}`}
-                              className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors"
-                              onClick={() => setCaffeOpen(false)}
-                            >
-                              {titleCase(cat.name)}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </li>
-            )}
-
-            {/* Bevande Fredde */}
-            {freddeGroup && (
-              <li
-                className="relative"
-                onMouseEnter={handleFreddeEnter}
-                onMouseLeave={handleFreddeLeave}
-              >
-                <button
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 rounded transition-colors"
-                >
-                  <GlassWater size={18} />
-                  Bevande Fredde
-                  <ChevronDown size={14} className={`transition-transform ${freddeOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {freddeOpen && (
-                  <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
-                    <Link
-                      href={`/catalogo?group=${freddeGroup.slug}`}
-                      className="block text-sm font-bold text-navy hover:text-blue transition-colors mb-2"
-                      onClick={() => setFreddeOpen(false)}
-                    >
-                      Tutti i prodotti
-                    </Link>
-                    {freddeGroup.categories.length > 0 && (
-                      <ul className="space-y-1 border-t border-gray-100 pt-2">
-                        {freddeGroup.categories.map((cat) => (
-                          <li key={cat.id}>
-                            <Link
-                              href={`/catalogo?group=${freddeGroup.slug}&category=${cat.slug}`}
-                              className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors"
-                              onClick={() => setFreddeOpen(false)}
-                            >
-                              {titleCase(cat.name)}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </li>
-            )}
 
             {/* Promozioni */}
             <li>
