@@ -24,7 +24,7 @@ export default function HomePage() {
                   priority
                 />
                 <p className="font-heading text-[1.25rem] md:text-[1.5rem] font-bold leading-snug mb-3 text-navy">
-                  Tutto per il tuo ufficio da un unico fornitore.
+                  Il tuo unico fornitore a Milano.
                   <br />
                   Caffè, acqua e cancelleria consegnati in 48 ore.
                 </p>
