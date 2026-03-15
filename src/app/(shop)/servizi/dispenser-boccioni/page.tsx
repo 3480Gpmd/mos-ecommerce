@@ -1,8 +1,6 @@
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Droplets, Wifi, Package, Clock, Wrench, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Droplets, Package, Clock, Wrench, CheckCircle2, Pipette } from 'lucide-react';
 import { PageTitle } from '@/components/ui/page-title';
 
 export const metadata = {
@@ -19,9 +17,7 @@ export default function DispenserBoccioniPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      <main className="flex-1">
+    <>
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
           <div className="max-w-6xl mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -37,9 +33,13 @@ export default function DispenserBoccioniPage() {
                   Richiedi un preventivo <ArrowRight size={18} />
                 </Link>
               </div>
-              <div className="flex gap-4 justify-center">
-                <Image src="/servizi/dispenser-rete.png" alt="Dispenser a rete idrica" width={250} height={350} className="rounded-xl shadow-lg" />
-                <Image src="/servizi/dispenser-boccioni.png" alt="Dispenser con boccioni" width={200} height={300} className="rounded-xl shadow-lg mt-8" />
+              <div className="flex gap-6 justify-center items-start">
+                <div className="w-[220px] h-[280px] bg-white rounded-xl shadow-lg flex items-center justify-center p-6">
+                  <Image src="/servizi/dispenser-rete.png" alt="Dispenser a rete idrica" width={180} height={240} className="object-contain w-auto h-auto max-w-full max-h-[240px]" />
+                </div>
+                <div className="w-[220px] h-[280px] bg-white rounded-xl shadow-lg flex items-center justify-center p-6 mt-8">
+                  <Image src="/servizi/dispenser-boccioni.png" alt="Dispenser con boccioni" width={180} height={240} className="object-contain w-auto h-auto max-w-full max-h-[240px]" />
+                </div>
               </div>
             </div>
           </div>
@@ -49,13 +49,15 @@ export default function DispenserBoccioniPage() {
           <div className="max-w-5xl mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Rete idrica */}
-              <div className="border border-gray-200 rounded-2xl p-8">
-                <Image src="/servizi/dispenser-rete.png" alt="Dispenser rete idrica" width={300} height={200} className="rounded-xl mx-auto mb-6" />
+              <div className="border border-gray-200 rounded-2xl p-8 flex flex-col">
+                <div className="h-[220px] flex items-center justify-center mb-6">
+                  <Image src="/servizi/dispenser-rete.png" alt="Dispenser rete idrica" width={200} height={200} className="object-contain w-auto h-auto max-w-full max-h-[200px]" />
+                </div>
                 <div className="flex items-center gap-3 mb-4">
-                  <Wifi size={28} className="text-blue" />
+                  <Pipette size={28} className="text-blue" />
                   <h2 className="font-heading text-xl font-bold text-navy">Collegati alla rete idrica</h2>
                 </div>
-                <ul className="space-y-3">
+                <ul className="space-y-3 flex-1">
                   <li className="flex gap-3"><CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" /><span className="text-sm text-gray-600">Acqua microfiltrata sempre disponibile</span></li>
                   <li className="flex gap-3"><CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" /><span className="text-sm text-gray-600">Opzioni: naturale, fredda, gassata e calda</span></li>
                   <li className="flex gap-3"><CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" /><span className="text-sm text-gray-600">Manutenzione periodica filtri inclusa</span></li>
@@ -65,13 +67,15 @@ export default function DispenserBoccioniPage() {
               </div>
 
               {/* Boccioni */}
-              <div className="border border-gray-200 rounded-2xl p-8">
-                <Image src="/servizi/dispenser-boccioni.png" alt="Dispenser con boccioni" width={300} height={200} className="rounded-xl mx-auto mb-6" />
+              <div className="border border-gray-200 rounded-2xl p-8 flex flex-col">
+                <div className="h-[220px] flex items-center justify-center mb-6">
+                  <Image src="/servizi/dispenser-boccioni.png" alt="Dispenser con boccioni" width={200} height={200} className="object-contain w-auto h-auto max-w-full max-h-[200px]" />
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <Package size={28} className="text-blue" />
                   <h2 className="font-heading text-xl font-bold text-navy">Dispenser con boccioni</h2>
                 </div>
-                <ul className="space-y-3">
+                <ul className="space-y-3 flex-1">
                   <li className="flex gap-3"><CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" /><span className="text-sm text-gray-600">Installazione rapida senza interventi sull&apos;impianto</span></li>
                   <li className="flex gap-3"><CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" /><span className="text-sm text-gray-600">Rifornimenti programmati e gestione scorte</span></li>
                   <li className="flex gap-3"><CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" /><span className="text-sm text-gray-600">Acqua naturale a temperatura ambiente e fredda</span></li>
@@ -142,8 +146,6 @@ export default function DispenserBoccioniPage() {
             </Link>
           </div>
         </section>
-      </main>
-      <Footer />
-    </div>
+    </>
   );
 }

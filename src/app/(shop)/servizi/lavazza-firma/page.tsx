@@ -1,5 +1,3 @@
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Coffee, Clock, Wrench, Truck, BarChart3, CheckCircle2 } from 'lucide-react';
@@ -27,9 +25,7 @@ export default function LavazzaFirmaPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      <main className="flex-1">
+    <>
         <section className="bg-gradient-to-br from-gray-50 to-blue/5 py-16">
           <div className="max-w-6xl mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -115,8 +111,6 @@ export default function LavazzaFirmaPage() {
             </Link>
           </div>
         </section>
-      </main>
-      <Footer />
-    </div>
+    </>
   );
 }

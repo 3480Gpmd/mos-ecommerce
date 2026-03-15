@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { quoteRequests } from '@/db/schema';
 import { z } from 'zod';
+import { sendEmail, getAdminEmail, quoteRequestAdminEmail } from '@/lib/email';
 
 const quoteSchema = z.object({
   companyName: z.string().optional(),
@@ -29,7 +30,16 @@ export async function POST(request: NextRequest) {
       interests: parsed.data.interests || null,
     }).returning();
 
-    // TODO: inviare email notifica all'admin (quando email configurata)
+    // Invia email notifica all'admin
+    const emailTemplate = quoteRequestAdminEmail({
+      contactName: parsed.data.contactName,
+      companyName: parsed.data.companyName,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      message: parsed.data.message,
+      interests: parsed.data.interests,
+    });
+    sendEmail({ to: getAdminEmail(), ...emailTemplate }).catch(console.error);
 
     return NextResponse.json({ success: true, id: quote.id });
   } catch (error: unknown) {

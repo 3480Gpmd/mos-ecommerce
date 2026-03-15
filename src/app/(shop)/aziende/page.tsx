@@ -1,7 +1,5 @@
 'use client';
 
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
@@ -63,9 +61,7 @@ export default function AziendePage() {
   const interestOptions = ['Caffè e capsule', 'Acqua e boccioni', 'Forniture ufficio', 'Macchina caffè in comodato', 'Altro'];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      <main className="flex-1">
+    <>
         {/* Hero */}
         <section className="bg-gradient-to-br from-navy to-blue py-16 md:py-24 text-white">
           <div className="max-w-5xl mx-auto px-4 text-center">
@@ -222,8 +218,6 @@ export default function AziendePage() {
             )}
           </div>
         </section>
-      </main>
-      <Footer />
-    </div>
+    </>
   );
 }

@@ -5,6 +5,8 @@ import { eq, desc, and } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { generateOrderNumber } from '@/lib/utils';
+import { sendEmail, getAdminEmail, orderConfirmationCustomerEmail, newOrderAdminEmail } from '@/lib/email';
+import { generateEasyfattExcel } from '@/lib/easyfatt-excel';
 
 const createOrderSchema = z.object({
   shippingAddress: z.string().min(1),
@@ -178,6 +180,62 @@ export async function POST(req: NextRequest) {
     ]);
 
     console.log(`🔵 Ordine ${orderNumber} creato per cliente ${customer.email}`);
+
+    // Prepara dati email
+    const customerName = customer.companyName || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
+    const emailItems = itemsData.map((item) => ({
+      code: item.productCode || '',
+      name: item.productName || '',
+      qty: item.qty,
+      priceNet: item.priceUnit,
+      unit: item.unit,
+      vatPct: item.vatPct,
+    }));
+
+    // 1. Email ringraziamento al cliente
+    const customerEmailTemplate = orderConfirmationCustomerEmail({
+      customerName,
+      orderNumber,
+      items: emailItems,
+      subtotal: String(subtotal.toFixed(2)),
+      vatAmount: String(vatAmount.toFixed(2)),
+      shippingCost: String(shippingCost.toFixed(2)),
+      total: String(total.toFixed(2)),
+      paymentMethod: parsed.data.paymentMethod,
+      shippingAddress: parsed.data.shippingAddress,
+      shippingCity: parsed.data.shippingCity,
+    });
+    sendEmail({ to: customer.email, ...customerEmailTemplate }).catch(console.error);
+
+    // 2. Email admin con Excel Easyfatt allegato
+    const adminEmailTemplate = newOrderAdminEmail({
+      orderNumber,
+      customerName,
+      customerEmail: customer.email,
+      items: emailItems,
+      subtotal: String(subtotal.toFixed(2)),
+      vatAmount: String(vatAmount.toFixed(2)),
+      shippingCost: String(shippingCost.toFixed(2)),
+      total: String(total.toFixed(2)),
+      paymentMethod: parsed.data.paymentMethod,
+      shippingAddress: parsed.data.shippingAddress,
+      shippingCity: parsed.data.shippingCity,
+      notes: parsed.data.notes,
+      isUrgent: parsed.data.isUrgent,
+    });
+
+    // Genera Excel Easyfatt e allegalo
+    try {
+      const excelBuffer = await generateEasyfattExcel(emailItems);
+      await sendEmail({
+        to: getAdminEmail(),
+        ...adminEmailTemplate,
+        attachments: [{ filename: `ordine-${orderNumber}.xlsx`, content: excelBuffer }],
+      });
+    } catch (emailErr) {
+      console.error('🔴 Errore invio email admin ordine:', emailErr);
+      // Non blocca la creazione ordine
+    }
 
     return NextResponse.json({ order, orderNumber }, { status: 201 });
   } catch (err: unknown) {

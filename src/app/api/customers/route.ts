@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import { sendEmail, getAdminEmail, welcomeEmail, newRegistrationAdminEmail } from '@/lib/email';
 
 // Helper: trasforma stringa vuota in undefined (per campi opzionali)
 const emptyToUndefined = z.preprocess(
@@ -64,6 +65,21 @@ export async function POST(req: NextRequest) {
     }).returning();
 
     console.log(`🔵 Nuovo cliente registrato: ${email} (${data.customerType}) - attivo: ${isActive}`);
+
+    // Invia welcome email al cliente
+    const welcome = welcomeEmail(data.firstName || '');
+    sendEmail({ to: email.toLowerCase(), ...welcome }).catch(console.error);
+
+    // Invia notifica admin
+    const adminNotif = newRegistrationAdminEmail({
+      email: email.toLowerCase(),
+      firstName: data.firstName,
+      lastName: data.lastName,
+      companyName: data.companyName,
+      customerType: data.customerType,
+      phone: data.phone,
+    });
+    sendEmail({ to: getAdminEmail(), ...adminNotif }).catch(console.error);
 
     return NextResponse.json({
       id: customer.id,
