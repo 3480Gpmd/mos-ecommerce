@@ -36,6 +36,8 @@ export async function PUT(req: NextRequest) {
       'vatCode', 'stockAvailable', 'isActive', 'isPromo', 'isManual',
       'imageUrl', 'imageCustom', 'unit',
       'groupId', 'categoryId', 'subcategoryId',
+      'isFeatured', 'featuredSort', 'isSuperPrice', 'superPrice',
+      'isNew', 'newUntilDate', 'promoStartDate', 'promoEndDate',
     ];
 
     for (const key of editableKeys) {

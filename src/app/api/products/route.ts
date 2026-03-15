@@ -11,6 +11,7 @@ const searchSchema = z.object({
   subcategory: z.string().optional(),
   brand: z.string().optional(),
   promo: z.string().optional(),
+  isNew: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(24),
   sort: z.enum(['name', 'price_asc', 'price_desc', 'newest']).default('name'),
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Parametri non validi', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { q, group, category, subcategory, brand, promo, page, limit, sort } = parsed.data;
+    const { q, group, category, subcategory, brand, promo, isNew, page, limit, sort } = parsed.data;
     const offset = (page - 1) * limit;
 
     const conditions = [eq(products.isActive, true)];
@@ -37,6 +38,9 @@ export async function GET(req: NextRequest) {
     }
     if (promo === 'true') {
       conditions.push(eq(products.isPromo, true));
+    }
+    if (isNew === 'true') {
+      conditions.push(eq(products.isNew, true));
     }
     if (group) {
       const [g] = await db.select({ id: productGroups.id }).from(productGroups).where(eq(productGroups.slug, group)).limit(1);

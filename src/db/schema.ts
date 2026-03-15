@@ -21,6 +21,7 @@ export const productGroups = pgTable('product_groups', {
   slug: varchar('slug', { length: 255 }).notNull().unique(),
   imageUrl: text('image_url'),
   sortOrder: integer('sort_order').default(0),
+  relevanceScore: integer('relevance_score').default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   uniqueIndex('product_groups_code_idx').on(table.code),
@@ -33,6 +34,7 @@ export const productCategories = pgTable('product_categories', {
   slug: varchar('slug', { length: 255 }).notNull(),
   groupId: integer('group_id').references(() => productGroups.id).notNull(),
   sortOrder: integer('sort_order').default(0),
+  relevanceScore: integer('relevance_score').default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   uniqueIndex('product_categories_code_idx').on(table.code),
@@ -77,10 +79,23 @@ export const products = pgTable('products', {
   orderMultiple: integer('order_multiple').default(1),
   packSize: integer('pack_size'),
 
+  maxOrderQty: integer('max_order_qty'),
+
   isActive: boolean('is_active').default(true).notNull(),
   isManual: boolean('is_manual').default(false).notNull(),
   isPromo: boolean('is_promo').default(false).notNull(),
   isExhausting: boolean('is_exhausting').default(false).notNull(),
+  isFeatured: boolean('is_featured').default(false).notNull(),
+  isSuperPrice: boolean('is_super_price').default(false).notNull(),
+  isZeroMarkup: boolean('is_zero_markup').default(false).notNull(),
+  isNew: boolean('is_new').default(false).notNull(),
+
+  superPrice: decimal('super_price', { precision: 10, scale: 2 }),
+  featuredSort: integer('featured_sort').default(0),
+  relevanceScore: integer('relevance_score').default(0),
+  promoStartDate: timestamp('promo_start_date'),
+  promoEndDate: timestamp('promo_end_date'),
+  newUntilDate: timestamp('new_until_date'),
 
   imageUrl: text('image_url'),
   imageCustom: text('image_custom'),
@@ -490,6 +505,218 @@ export const cartAbandonmentEmails = pgTable('cart_abandonment_emails', {
   index('cart_abandonment_type_idx').on(table.emailType),
 ]);
 
+// ─── Modalità di pagamento ────────────────────────────────────────
+
+export const paymentMethods = pgTable('payment_methods', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Regole spedizione ───────────────────────────────────────────
+
+export const shippingRules = pgTable('shipping_rules', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  minAmount: decimal('min_amount', { precision: 10, scale: 2 }).default('0'),
+  maxAmount: decimal('max_amount', { precision: 10, scale: 2 }),
+  minWeight: decimal('min_weight', { precision: 10, scale: 2 }),
+  maxWeight: decimal('max_weight', { precision: 10, scale: 2 }),
+  cost: decimal('cost', { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Supplementi ingombranti ─────────────────────────────────────
+
+export const bulkySurcharges = pgTable('bulky_surcharges', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  categoryId: integer('category_id').references(() => productCategories.id),
+  productId: integer('product_id').references(() => products.id),
+  minQty: integer('min_qty').default(1),
+  surcharge: decimal('surcharge', { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Zone di spedizione ──────────────────────────────────────────
+
+export const shippingZones = pgTable('shipping_zones', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  provinces: text('provinces').notNull(), // comma-separated province codes
+  extraCost: decimal('extra_cost', { precision: 10, scale: 2 }).notNull().default('0'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Coupon ──────────────────────────────────────────────────────
+
+export const coupons = pgTable('coupons', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  description: text('description'),
+  discountType: varchar('discount_type', { length: 20 }).notNull(), // 'percentage' | 'fixed'
+  discountValue: decimal('discount_value', { precision: 10, scale: 2 }).notNull(),
+  minOrderAmount: decimal('min_order_amount', { precision: 10, scale: 2 }),
+  maxUses: integer('max_uses'),
+  usedCount: integer('used_count').default(0).notNull(),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('coupons_code_idx').on(table.code),
+]);
+
+export const couponRedemptions = pgTable('coupon_redemptions', {
+  id: serial('id').primaryKey(),
+  couponId: integer('coupon_id').references(() => coupons.id, { onDelete: 'cascade' }).notNull(),
+  orderId: integer('order_id').references(() => orders.id),
+  customerId: integer('customer_id').references(() => customers.id),
+  redeemedAt: timestamp('redeemed_at').defaultNow().notNull(),
+}, (table) => [
+  index('coupon_redemptions_coupon_idx').on(table.couponId),
+]);
+
+// ─── Regole omaggio ──────────────────────────────────────────────
+
+export const giftRules = pgTable('gift_rules', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  triggerType: varchar('trigger_type', { length: 30 }).notNull(), // 'amount' | 'product' | 'category'
+  triggerValue: decimal('trigger_value', { precision: 10, scale: 2 }),
+  triggerProductId: integer('trigger_product_id').references(() => products.id),
+  triggerCategoryId: integer('trigger_category_id').references(() => productCategories.id),
+  giftProductId: integer('gift_product_id').references(() => products.id).notNull(),
+  giftQty: integer('gift_qty').default(1).notNull(),
+  minOrderAmount: decimal('min_order_amount', { precision: 10, scale: 2 }),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Unità di misura ─────────────────────────────────────────────
+
+export const unitOfMeasure = pgTable('unit_of_measure', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 10 }).notNull().unique(),
+  name: varchar('name', { length: 50 }).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+});
+
+// ─── Prezzi a volume (scalare) ───────────────────────────────────
+
+export const volumePricing = pgTable('volume_pricing', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  minQty: integer('min_qty').notNull(),
+  maxQty: integer('max_qty'),
+  discountPct: decimal('discount_pct', { precision: 5, scale: 2 }),
+  priceOverride: decimal('price_override', { precision: 10, scale: 2 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('volume_pricing_product_idx').on(table.productId),
+]);
+
+// ─── Contratti cliente ───────────────────────────────────────────
+
+export const customerContracts = pgTable('customer_contracts', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').references(() => customers.id, { onDelete: 'cascade' }).notNull(),
+  priceListId: integer('price_list_id').references(() => priceLists.id),
+  discountPct: decimal('discount_pct', { precision: 5, scale: 2 }).default('0'),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  notes: text('notes'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('customer_contracts_customer_idx').on(table.customerId),
+]);
+
+// ─── Sinonimi di ricerca ─────────────────────────────────────────
+
+export const searchSynonyms = pgTable('search_synonyms', {
+  id: serial('id').primaryKey(),
+  term: varchar('term', { length: 100 }).notNull(),
+  synonyms: text('synonyms').notNull(), // comma-separated
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Messaggi utenti ─────────────────────────────────────────────
+
+export const userMessages = pgTable('user_messages', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  content: text('content').notNull(),
+  type: varchar('type', { length: 20 }).notNull().default('banner'), // 'banner' | 'popup' | 'email'
+  targetType: varchar('target_type', { length: 20 }).notNull().default('all'), // 'all' | 'category' | 'customer'
+  targetId: integer('target_id'),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Galleria prodotti (immagini multiple) ───────────────────────
+
+export const productImages = pgTable('product_images', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  imageUrl: text('image_url').notNull(),
+  altText: varchar('alt_text', { length: 255 }),
+  sortOrder: integer('sort_order').default(0),
+  isPrimary: boolean('is_primary').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('product_images_product_idx').on(table.productId),
+]);
+
+// ─── Tracking visualizzazioni ────────────────────────────────────
+
+export const productViews = pgTable('product_views', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  customerId: integer('customer_id').references(() => customers.id),
+  sessionId: varchar('session_id', { length: 100 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('product_views_product_idx').on(table.productId),
+  index('product_views_created_idx').on(table.createdAt),
+]);
+
+export const pageViews = pgTable('page_views', {
+  id: serial('id').primaryKey(),
+  path: varchar('path', { length: 500 }).notNull(),
+  customerId: integer('customer_id').references(() => customers.id),
+  sessionId: varchar('session_id', { length: 100 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('page_views_path_idx').on(table.path),
+  index('page_views_created_idx').on(table.createdAt),
+]);
+
+// ─── Cataloghi ───────────────────────────────────────────────────
+
+export const catalogs = pgTable('catalogs', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  fileUrl: text('file_url'),
+  isActive: boolean('is_active').default(true).notNull(),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // ─── Types ─────────────────────────────────────────────────────────
 
 export type Product = typeof products.$inferSelect;
@@ -503,3 +730,15 @@ export type NewOrderItem = typeof orderItems.$inferInsert;
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type CustomerNote = typeof customerNotes.$inferSelect;
 export type QuoteRequest = typeof quoteRequests.$inferSelect;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+export type ShippingRule = typeof shippingRules.$inferSelect;
+export type BulkySurcharge = typeof bulkySurcharges.$inferSelect;
+export type ShippingZone = typeof shippingZones.$inferSelect;
+export type Coupon = typeof coupons.$inferSelect;
+export type GiftRule = typeof giftRules.$inferSelect;
+export type VolumePricing = typeof volumePricing.$inferSelect;
+export type CustomerContract = typeof customerContracts.$inferSelect;
+export type SearchSynonym = typeof searchSynonyms.$inferSelect;
+export type UserMessage = typeof userMessages.$inferSelect;
+export type ProductImage = typeof productImages.$inferSelect;
+export type Catalog = typeof catalogs.$inferSelect;
