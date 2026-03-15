@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Package, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  Save, FileDown, ShoppingBag, TrendingUp, CalendarDays,
+  Save, FileDown, FileSpreadsheet, ShoppingBag, TrendingUp, CalendarDays,
 } from 'lucide-react';
 
 interface OrderRow {
@@ -281,6 +281,30 @@ export default function AdminOrdiniPage() {
     }
   };
 
+  const handleExportEasyfattXlsx = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      const res = await fetch('/api/easyfatt/xlsx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: selectedIds }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `easyfatt-import-${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setSelectedIds([]);
+        fetchOrders(pagination.page);
+      }
+    } catch {
+      console.error('Errore export XLSX');
+    }
+  };
+
   return (
     <div>
       <h1 className="font-heading text-2xl font-bold mb-6">Gestione Ordini</h1>
@@ -370,13 +394,22 @@ export default function AdminOrdiniPage() {
           placeholder="A"
         />
         {selectedIds.length > 0 && (
-          <button
-            onClick={handleExportEasyfatt}
-            className="flex items-center gap-2 bg-green-600 text-white text-sm font-bold px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <FileDown size={16} />
-            Export Easyfatt ({selectedIds.length})
-          </button>
+          <>
+            <button
+              onClick={handleExportEasyfatt}
+              className="flex items-center gap-2 bg-green-600 text-white text-sm font-bold px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <FileDown size={16} />
+              XML ({selectedIds.length})
+            </button>
+            <button
+              onClick={handleExportEasyfattXlsx}
+              className="flex items-center gap-2 bg-emerald-600 text-white text-sm font-bold px-4 py-2.5 rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <FileSpreadsheet size={16} />
+              Excel Easyfatt ({selectedIds.length})
+            </button>
+          </>
         )}
       </div>
 
@@ -686,7 +719,30 @@ export default function AdminOrdiniPage() {
                                           className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 transition-colors"
                                         >
                                           <FileDown size={14} />
-                                          Esporta Easyfatt
+                                          XML
+                                        </button>
+                                        <button
+                                          onClick={async () => {
+                                            const res = await fetch('/api/easyfatt/xlsx', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ orderIds: [orderDetail.id] }),
+                                            });
+                                            if (res.ok) {
+                                              const blob = await res.blob();
+                                              const url = URL.createObjectURL(blob);
+                                              const a = document.createElement('a');
+                                              a.href = url;
+                                              a.download = `easyfatt-import-${orderDetail.orderNumber}.xlsx`;
+                                              a.click();
+                                              URL.revokeObjectURL(url);
+                                              fetchOrders(pagination.page);
+                                            }
+                                          }}
+                                          className="flex items-center gap-1 px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors"
+                                        >
+                                          <FileSpreadsheet size={14} />
+                                          Excel Easyfatt
                                         </button>
                                       </div>
                                     </div>
