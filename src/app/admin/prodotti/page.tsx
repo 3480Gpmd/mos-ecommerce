@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Search, Package, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  Save, Plus, Trash2, X,
+  Save, Plus, Trash2, X, Upload,
 } from 'lucide-react';
 import type { Product } from '@/db/schema';
 
@@ -43,12 +43,16 @@ export default function AdminProdottiPage() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('');
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 50, total: 0, totalPages: 0 });
 
   // Expanded row
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Product>>({});
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New product modal
   const [showNew, setShowNew] = useState(false);
@@ -58,11 +62,13 @@ export default function AdminProdottiPage() {
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set('q', search);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (brandFilter) params.set('brand', brandFilter);
     params.set('page', String(page));
     params.set('limit', '50');
 
     try {
-      const res = await fetch(`/api/products?${params}`);
+      const res = await fetch(`/api/admin/products?${params}`);
       const data = await res.json();
       setProducts(data.products || []);
       setPagination({
@@ -76,7 +82,7 @@ export default function AdminProdottiPage() {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, statusFilter, brandFilter]);
 
   useEffect(() => { fetchProducts(1); }, [fetchProducts]);
 
@@ -101,8 +107,47 @@ export default function AdminProdottiPage() {
       stockAvailable: product.stockAvailable,
       isActive: product.isActive,
       isPromo: product.isPromo,
+      isFeatured: product.isFeatured,
+      isSuperPrice: product.isSuperPrice,
+      isNew: product.isNew,
       imageUrl: product.imageUrl,
+      imageCustom: product.imageCustom,
+      superPrice: product.superPrice,
+      minOrderQty: product.minOrderQty,
+      orderMultiple: product.orderMultiple,
+      packSize: product.packSize,
     });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !expandedId) return;
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('productId', String(expandedId));
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/products/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const { product: updated } = await res.json();
+        setProducts((prev) => prev.map((p) => p.id === expandedId ? updated : p));
+        setEditData((prev) => ({ ...prev, imageCustom: updated.imageCustom }));
+      } else {
+        console.error('Errore upload immagine');
+      }
+    } catch (err) {
+      console.error('Errore upload immagine:', err);
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSave = async () => {
@@ -176,9 +221,9 @@ export default function AdminProdottiPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="mb-4">
-        <div className="relative max-w-md">
+      {/* Filters */}
+      <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-end">
+        <div className="relative flex-1 max-w-md">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -188,6 +233,28 @@ export default function AdminProdottiPage() {
             className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent"
           />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            fetchProducts(1);
+          }}
+          className="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent"
+        >
+          <option value="all">Tutti gli stati</option>
+          <option value="active">Attivi</option>
+          <option value="inactive">Inattivi</option>
+        </select>
+        <input
+          type="text"
+          value={brandFilter}
+          onChange={(e) => {
+            setBrandFilter(e.target.value);
+            fetchProducts(1);
+          }}
+          placeholder="Filtra per marca..."
+          className="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent"
+        />
       </div>
 
       {/* Products table */}
@@ -362,36 +429,152 @@ export default function AdminProdottiPage() {
                                 />
                               </div>
 
-                              <div>
-                                <label className="text-xs font-medium text-gray-500 uppercase block mb-1">URL immagine</label>
-                                <input
-                                  type="url"
-                                  value={String(editData.imageUrl || '')}
-                                  onChange={(e) => setEditData({ ...editData, imageUrl: e.target.value })}
-                                  className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
-                                  placeholder="https://..."
-                                />
+                              {/* Image upload section */}
+                              <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+                                <div>
+                                  <label className="text-xs font-medium text-gray-500 uppercase block mb-2">Immagine prodotto</label>
+
+                                  {/* Current image preview */}
+                                  {(editData.imageCustom || editData.imageUrl) && (
+                                    <div className="mb-3">
+                                      <p className="text-xs text-gray-500 mb-2">Immagine attuale:</p>
+                                      <img
+                                        src={String(editData.imageCustom || editData.imageUrl)}
+                                        alt="Preview"
+                                        className="max-w-xs h-auto border rounded-lg"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Upload new image */}
+                                  <div className="mb-3">
+                                    <label className="text-xs font-medium text-gray-500 uppercase block mb-1">Carica nuova immagine</label>
+                                    <input
+                                      ref={fileInputRef}
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={handleImageUpload}
+                                      disabled={uploadingImage}
+                                      className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    />
+                                    {uploadingImage && <p className="text-xs text-gray-500 mt-1">Upload in corso...</p>}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-xs font-medium text-gray-500 uppercase block mb-1">URL immagine personalizzato</label>
+                                  <input
+                                    type="url"
+                                    value={String(editData.imageCustom || '')}
+                                    onChange={(e) => setEditData({ ...editData, imageCustom: e.target.value })}
+                                    className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    placeholder="https://..."
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-xs font-medium text-gray-500 uppercase block mb-1">URL immagine (fallback)</label>
+                                  <input
+                                    type="url"
+                                    value={String(editData.imageUrl || '')}
+                                    onChange={(e) => setEditData({ ...editData, imageUrl: e.target.value })}
+                                    className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    placeholder="https://..."
+                                  />
+                                </div>
                               </div>
 
-                              <div className="flex items-center gap-6">
-                                <label className="flex items-center gap-2 text-sm">
-                                  <input
-                                    type="checkbox"
-                                    checked={editData.isActive ?? true}
-                                    onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
-                                    className="rounded border-gray-300"
-                                  />
-                                  Attivo
-                                </label>
-                                <label className="flex items-center gap-2 text-sm">
-                                  <input
-                                    type="checkbox"
-                                    checked={editData.isPromo ?? false}
-                                    onChange={(e) => setEditData({ ...editData, isPromo: e.target.checked })}
-                                    className="rounded border-gray-300"
-                                  />
-                                  In promozione
-                                </label>
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editData.isActive ?? true}
+                                      onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
+                                      className="rounded border-gray-300"
+                                    />
+                                    Attivo
+                                  </label>
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editData.isPromo ?? false}
+                                      onChange={(e) => setEditData({ ...editData, isPromo: e.target.checked })}
+                                      className="rounded border-gray-300"
+                                    />
+                                    In promozione
+                                  </label>
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editData.isFeatured ?? false}
+                                      onChange={(e) => setEditData({ ...editData, isFeatured: e.target.checked })}
+                                      className="rounded border-gray-300"
+                                    />
+                                    In vetrina
+                                  </label>
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editData.isSuperPrice ?? false}
+                                      onChange={(e) => setEditData({ ...editData, isSuperPrice: e.target.checked })}
+                                      className="rounded border-gray-300"
+                                    />
+                                    Super prezzo
+                                  </label>
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editData.isNew ?? false}
+                                      onChange={(e) => setEditData({ ...editData, isNew: e.target.checked })}
+                                      className="rounded border-gray-300"
+                                    />
+                                    Nuovo
+                                  </label>
+                                </div>
+
+                                {editData.isSuperPrice && (
+                                  <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase block mb-1">Prezzo super *</label>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={String(editData.superPrice || '')}
+                                      onChange={(e) => setEditData({ ...editData, superPrice: e.target.value })}
+                                      className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    />
+                                  </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                  <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase block mb-1">Qtà ordine minimo</label>
+                                    <input
+                                      type="number"
+                                      value={editData.minOrderQty ?? 1}
+                                      onChange={(e) => setEditData({ ...editData, minOrderQty: parseInt(e.target.value) || 1 })}
+                                      className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase block mb-1">Multiplo ordine</label>
+                                    <input
+                                      type="number"
+                                      value={editData.orderMultiple ?? 1}
+                                      onChange={(e) => setEditData({ ...editData, orderMultiple: parseInt(e.target.value) || 1 })}
+                                      className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase block mb-1">Dimensione pacco</label>
+                                    <input
+                                      type="number"
+                                      value={editData.packSize ?? ''}
+                                      onChange={(e) => setEditData({ ...editData, packSize: e.target.value ? parseInt(e.target.value) : null })}
+                                      className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                    />
+                                  </div>
+                                </div>
                               </div>
 
                               <div className="flex items-center gap-2 pt-2">

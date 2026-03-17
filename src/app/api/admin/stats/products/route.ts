@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/db';
-import { productViews, products } from '@/db/schema';
-import { sql, gte, eq, count, desc } from 'drizzle-orm';
+import { productViews, products, orderItems, productCategories, orders } from '@/db/schema';
+import { sql, gte, eq, count, desc, and, isNull } from 'drizzle-orm';
 
 async function checkAdmin() {
   const session = await auth();
@@ -17,33 +17,80 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
 
   const { searchParams } = new URL(req.url);
-  const period = searchParams.get('period') || 'month';
+  const period = searchParams.get('period') || 'all';
 
   const now = new Date();
-  let startDate: Date;
+  let startDate: Date | null = null;
 
   switch (period) {
-    case 'quarter':
-      startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    case '7d':
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       break;
-    case 'year':
-      startDate = new Date(now.getFullYear(), 0, 1);
+    case '30d':
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       break;
-    case 'month':
+    case '90d':
+      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      break;
+    case 'all':
     default:
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      startDate = null;
       break;
   }
 
-  // Total views in period
-  const [totals] = await db.select({
-    totalViews: count(),
-  })
-    .from(productViews)
-    .where(gte(productViews.createdAt, startDate));
+  // Total products count
+  const [totalProductsData] = await db.select({ count: count() })
+    .from(products);
 
-  // Top 50 most viewed products
-  const topProducts = await db.select({
+  // Active products count
+  const [activeProductsData] = await db.select({ count: count() })
+    .from(products)
+    .where(sql`${products.isActive} = true`);
+
+  // Out of stock count
+  const [outOfStockData] = await db.select({ count: count() })
+    .from(products)
+    .where(sql`${products.stockAvailable} <= 0 AND ${products.isActive} = true`);
+
+  // Average price
+  const [avgPriceData] = await db.select({
+    avgPrice: sql<string>`COALESCE(AVG(${products.pricePublic}::numeric), COALESCE(AVG(${products.priceNet}::numeric), 0))`,
+  })
+    .from(products)
+    .where(sql`${products.isActive} = true`);
+
+  // Top 20 most ordered products by quantity
+  const whereClause = startDate ? gte(orders.createdAt, startDate) : sql`1=1`;
+  const topOrderedByQty = await db.select({
+    productId: orderItems.productId,
+    productCode: orderItems.productCode,
+    productName: orderItems.productName,
+    totalQty: sql<number>`COALESCE(SUM(${orderItems.qty}), 0)`,
+    totalRevenue: sql<string>`COALESCE(SUM(${orderItems.lineTotal}::numeric), 0)`,
+  })
+    .from(orderItems)
+    .where(whereClause)
+    .groupBy(orderItems.productId, orderItems.productCode, orderItems.productName)
+    .orderBy(desc(sql`SUM(${orderItems.qty})`))
+    .limit(20);
+
+  // Top 20 most ordered products by revenue
+  const topOrderedByRevenue = await db.select({
+    productId: orderItems.productId,
+    productCode: orderItems.productCode,
+    productName: orderItems.productName,
+    totalQty: sql<number>`COALESCE(SUM(${orderItems.qty}), 0)`,
+    totalRevenue: sql<string>`COALESCE(SUM(${orderItems.lineTotal}::numeric), 0)`,
+  })
+    .from(orderItems)
+    .where(whereClause)
+    .groupBy(orderItems.productId, orderItems.productCode, orderItems.productName)
+    .orderBy(desc(sql`SUM(${orderItems.lineTotal}::numeric)`))
+    .limit(20);
+
+  // Top 20 most viewed products
+  const viewsWhere = startDate ? gte(productViews.createdAt, startDate) : sql`1=1`;
+  const topViewed = await db.select({
     productId: productViews.productId,
     productCode: products.code,
     productName: products.name,
@@ -51,24 +98,70 @@ export async function GET(req: NextRequest) {
   })
     .from(productViews)
     .leftJoin(products, eq(productViews.productId, products.id))
-    .where(gte(productViews.createdAt, startDate))
+    .where(viewsWhere)
     .groupBy(productViews.productId, products.code, products.name)
     .orderBy(desc(count()))
-    .limit(50);
+    .limit(20);
 
-  // Daily trend
-  const dailyTrend = await db.select({
-    date: sql<string>`TO_CHAR(${productViews.createdAt}, 'YYYY-MM-DD')`,
-    views: count(),
+  // Products never ordered
+  const orderedProductIds = await db.select({ productId: orderItems.productId })
+    .from(orderItems)
+    .groupBy(orderItems.productId);
+  const orderedIdSet = new Set(orderedProductIds.map((p) => p.productId).filter(Boolean));
+
+  const neverOrdered = await db.select({
+    productId: products.id,
+    code: products.code,
+    name: products.name,
+    pricePublic: products.pricePublic,
+    stockAvailable: products.stockAvailable,
   })
-    .from(productViews)
-    .where(gte(productViews.createdAt, startDate))
-    .groupBy(sql`TO_CHAR(${productViews.createdAt}, 'YYYY-MM-DD')`)
-    .orderBy(sql`TO_CHAR(${productViews.createdAt}, 'YYYY-MM-DD')`);
+    .from(products)
+    .where(sql`${products.isActive} = true`)
+    .limit(20);
+  const neverOrderedFiltered = neverOrdered.filter((p) => !orderedIdSet.has(p.productId));
+
+  // Low stock products (stock < 5)
+  const lowStock = await db.select({
+    productId: products.id,
+    code: products.code,
+    name: products.name,
+    stockAvailable: products.stockAvailable,
+    pricePublic: products.pricePublic,
+  })
+    .from(products)
+    .where(sql`${products.isActive} = true AND ${products.stockAvailable} > 0 AND ${products.stockAvailable} < 5`)
+    .orderBy(products.stockAvailable)
+    .limit(20);
+
+  // Category breakdown
+  const categoryBreakdown = await db.select({
+    categoryId: products.categoryId,
+    categoryName: productCategories.name,
+    productCount: count(),
+  })
+    .from(products)
+    .leftJoin(productCategories, eq(products.categoryId, productCategories.id))
+    .where(sql`${products.isActive} = true`)
+    .groupBy(products.categoryId, productCategories.name)
+    .orderBy(desc(count()));
 
   return NextResponse.json({
-    totalViews: totals.totalViews,
-    topProducts,
-    dailyTrend,
+    totalProducts: totalProductsData.count,
+    activeProducts: activeProductsData.count,
+    outOfStockCount: outOfStockData.count,
+    avgPrice: parseFloat(avgPriceData.avgPrice || '0'),
+    topOrderedByQty: topOrderedByQty.map((p) => ({
+      ...p,
+      totalRevenue: parseFloat(p.totalRevenue || '0'),
+    })),
+    topOrderedByRevenue: topOrderedByRevenue.map((p) => ({
+      ...p,
+      totalRevenue: parseFloat(p.totalRevenue || '0'),
+    })),
+    topViewed,
+    neverOrdered: neverOrderedFiltered,
+    lowStock,
+    categoryBreakdown,
   });
 }

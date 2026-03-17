@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Upload, FileText, FolderTree, Tag, Settings, LogOut, ExternalLink, ClipboardList,
-  Cog, Megaphone, BookOpen, MessageSquare, BarChart3, Download, ChevronDown, ChevronRight,
+  Cog, Megaphone, BookOpen, MessageSquare, BarChart3, Download, ChevronDown, ChevronRight, ShoppingBag,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { href: '/admin/prezzi', label: 'Prezzi', icon: Tag },
   { href: '/admin/clienti', label: 'Clienti', icon: Users },
   { href: '/admin/preventivi', label: 'Preventivi', icon: ClipboardList },
+  { href: '/admin/carrelli-abbandonati', label: 'Carrelli Abbandonati', icon: ShoppingBag },
   {
     href: '/admin/configurazione', label: 'Configurazione', icon: Cog,
     children: [
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
       { href: '/admin/promozioni/superprezzo', label: 'SuperPrezzo', icon: Megaphone },
       { href: '/admin/promozioni/omaggi', label: 'Omaggi', icon: Megaphone },
       { href: '/admin/promozioni/promo-novita', label: 'Promo e Novità', icon: Megaphone },
+      { href: '/admin/campagne', label: 'Campagne', icon: Megaphone },
     ],
   },
   {
@@ -53,6 +55,7 @@ const navItems: NavItem[] = [
       { href: '/admin/catalogo/sinonimi', label: 'Sinonimi Ricerca', icon: BookOpen },
       { href: '/admin/catalogo/rilevanza', label: 'Rilevanza', icon: BookOpen },
       { href: '/admin/catalogo/gallery', label: 'Gallery Prodotti', icon: BookOpen },
+      { href: '/admin/relazioni-prodotti', label: 'Relazioni Prodotti', icon: BookOpen },
     ],
   },
   { href: '/admin/comunicazioni', label: 'Comunicazioni', icon: MessageSquare },

@@ -42,8 +42,27 @@ interface CustomerDetail {
   priceList: string | null;
   easyfattCode: string | null;
   crmId: string | null;
+  birthDate: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+interface EditCustomerForm {
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  phone: string;
+  customerType: string;
+  vatNumber: string;
+  fiscalCode: string;
+  sdiCode: string;
+  pecEmail: string;
+  address: string;
+  postcode: string;
+  city: string;
+  province: string;
+  easyfattCode: string;
+  birthDate: string;
 }
 
 interface RecentOrder {
@@ -139,6 +158,26 @@ export default function AdminClientiPage() {
   const [noteReminder, setNoteReminder] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
 
+  // Edit customer state
+  const [editCustomer, setEditCustomer] = useState<EditCustomerForm>({
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    phone: '',
+    customerType: 'privato',
+    vatNumber: '',
+    fiscalCode: '',
+    sdiCode: '',
+    pecEmail: '',
+    address: '',
+    postcode: '',
+    city: '',
+    province: '',
+    easyfattCode: '',
+    birthDate: '',
+  });
+  const [savingCustomerData, setSavingCustomerData] = useState(false);
+
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
     try {
@@ -189,6 +228,26 @@ export default function AdminClientiPage() {
       setTopProducts(data.topProducts || []);
       setPriceLists(data.priceLists || []);
       setSelectedPriceList(data.customer?.priceList || 'standard');
+
+      // Populate edit form with current customer data
+      setEditCustomer({
+        firstName: data.customer?.firstName || '',
+        lastName: data.customer?.lastName || '',
+        companyName: data.customer?.companyName || '',
+        phone: data.customer?.phone || '',
+        customerType: data.customer?.customerType || 'privato',
+        vatNumber: data.customer?.vatNumber || '',
+        fiscalCode: data.customer?.fiscalCode || '',
+        sdiCode: data.customer?.sdiCode || '',
+        pecEmail: data.customer?.pecEmail || '',
+        address: data.customer?.address || '',
+        postcode: data.customer?.postcode || '',
+        city: data.customer?.city || '',
+        province: data.customer?.province || '',
+        easyfattCode: data.customer?.easyfattCode || '',
+        birthDate: data.customer?.birthDate || '',
+      });
+
       fetchNotes(customerId);
     } catch {
       console.error('Errore nel caricamento dettaglio');
@@ -217,6 +276,47 @@ export default function AdminClientiPage() {
       console.error('Errore nel salvataggio');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCustomerData = async () => {
+    if (!detail) return;
+    setSavingCustomerData(true);
+    try {
+      const res = await fetch('/api/admin/customers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: detail.id,
+          ...editCustomer,
+        }),
+      });
+      if (res.ok) {
+        const updatedData = await res.json();
+        setDetail(updatedData.customer);
+        // Update in list
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === detail.id
+              ? {
+                  ...c,
+                  firstName: editCustomer.firstName || null,
+                  lastName: editCustomer.lastName || null,
+                  companyName: editCustomer.companyName || null,
+                  phone: editCustomer.phone || null,
+                  customerType: editCustomer.customerType,
+                  vatNumber: editCustomer.vatNumber || null,
+                  city: editCustomer.city || null,
+                  province: editCustomer.province || null,
+                }
+              : c
+          )
+        );
+      }
+    } catch {
+      console.error('Errore nel salvataggio dati cliente');
+    } finally {
+      setSavingCustomerData(false);
     }
   };
 
@@ -441,39 +541,195 @@ export default function AdminClientiPage() {
 
                                 {/* Detail sections in two columns */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                  {/* Left: Customer info */}
+                                  {/* Left: Customer info - Editable form */}
                                   <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                    <h3 className="font-heading font-bold text-navy mb-3">Dati cliente</h3>
-                                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                      <dt className="text-gray-500">Nome</dt>
-                                      <dd className="font-medium">{detail.firstName || '-'} {detail.lastName || ''}</dd>
-                                      <dt className="text-gray-500">Azienda</dt>
-                                      <dd className="font-medium">{detail.companyName || '-'}</dd>
-                                      <dt className="text-gray-500">Email</dt>
-                                      <dd className="font-medium">{detail.email}</dd>
-                                      <dt className="text-gray-500">Telefono</dt>
-                                      <dd className="font-medium">{detail.phone || '-'}</dd>
-                                      <dt className="text-gray-500">Tipo</dt>
-                                      <dd className="font-medium">{detail.customerType === 'azienda' ? 'Azienda' : 'Privato'}</dd>
-                                      <dt className="text-gray-500">P.IVA</dt>
-                                      <dd className="font-medium font-mono text-xs">{detail.vatNumber || '-'}</dd>
-                                      <dt className="text-gray-500">Codice fiscale</dt>
-                                      <dd className="font-medium font-mono text-xs">{detail.fiscalCode || '-'}</dd>
-                                      <dt className="text-gray-500">SDI</dt>
-                                      <dd className="font-medium font-mono text-xs">{detail.sdiCode || '-'}</dd>
-                                      <dt className="text-gray-500">PEC</dt>
-                                      <dd className="font-medium">{detail.pecEmail || '-'}</dd>
-                                      <dt className="text-gray-500">Indirizzo</dt>
-                                      <dd className="font-medium">{detail.address || '-'}</dd>
-                                      <dt className="text-gray-500">CAP / Citta / Prov.</dt>
-                                      <dd className="font-medium">
-                                        {[detail.postcode, detail.city, detail.province].filter(Boolean).join(', ') || '-'}
-                                      </dd>
-                                      <dt className="text-gray-500">Cod. Easyfatt</dt>
-                                      <dd className="font-medium font-mono text-xs">{detail.easyfattCode || '-'}</dd>
-                                      <dt className="text-gray-500">CRM ID</dt>
-                                      <dd className="font-medium font-mono text-xs">{detail.crmId || '-'}</dd>
-                                    </dl>
+                                    <h3 className="font-heading font-bold text-navy mb-4">Dati cliente</h3>
+                                    <div className="space-y-3">
+                                      {/* Nome, Cognome */}
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className="text-xs text-gray-500 font-medium block mb-1">Nome</label>
+                                          <input
+                                            type="text"
+                                            value={editCustomer.firstName}
+                                            onChange={(e) => setEditCustomer({ ...editCustomer, firstName: e.target.value })}
+                                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="text-xs text-gray-500 font-medium block mb-1">Cognome</label>
+                                          <input
+                                            type="text"
+                                            value={editCustomer.lastName}
+                                            onChange={(e) => setEditCustomer({ ...editCustomer, lastName: e.target.value })}
+                                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Azienda */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Azienda</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.companyName}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, companyName: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                        />
+                                      </div>
+
+                                      {/* Email (readonly) */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Email</label>
+                                        <div className="text-sm font-medium text-gray-700 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                                          {detail.email}
+                                        </div>
+                                      </div>
+
+                                      {/* Telefono */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Telefono</label>
+                                        <input
+                                          type="tel"
+                                          value={editCustomer.phone}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, phone: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                        />
+                                      </div>
+
+                                      {/* Tipo cliente */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Tipo cliente</label>
+                                        <select
+                                          value={editCustomer.customerType}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, customerType: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                        >
+                                          <option value="privato">Privato</option>
+                                          <option value="azienda">Azienda</option>
+                                        </select>
+                                      </div>
+
+                                      {/* P.IVA */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">P.IVA</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.vatNumber}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, vatNumber: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light font-mono"
+                                        />
+                                      </div>
+
+                                      {/* Codice fiscale */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Codice fiscale</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.fiscalCode}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, fiscalCode: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light font-mono"
+                                        />
+                                      </div>
+
+                                      {/* SDI */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">SDI</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.sdiCode}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, sdiCode: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light font-mono"
+                                        />
+                                      </div>
+
+                                      {/* PEC */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">PEC Email</label>
+                                        <input
+                                          type="email"
+                                          value={editCustomer.pecEmail}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, pecEmail: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                        />
+                                      </div>
+
+                                      {/* Indirizzo */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Indirizzo</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.address}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, address: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                        />
+                                      </div>
+
+                                      {/* CAP, Città, Provincia */}
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                          <label className="text-xs text-gray-500 font-medium block mb-1">CAP</label>
+                                          <input
+                                            type="text"
+                                            value={editCustomer.postcode}
+                                            onChange={(e) => setEditCustomer({ ...editCustomer, postcode: e.target.value })}
+                                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="text-xs text-gray-500 font-medium block mb-1">Città</label>
+                                          <input
+                                            type="text"
+                                            value={editCustomer.city}
+                                            onChange={(e) => setEditCustomer({ ...editCustomer, city: e.target.value })}
+                                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="text-xs text-gray-500 font-medium block mb-1">Provincia</label>
+                                          <input
+                                            type="text"
+                                            maxLength={2}
+                                            value={editCustomer.province}
+                                            onChange={(e) => setEditCustomer({ ...editCustomer, province: e.target.value.toUpperCase() })}
+                                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light uppercase"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Codice Easyfatt */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Cod. Easyfatt</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.easyfattCode}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, easyfattCode: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light font-mono"
+                                        />
+                                      </div>
+
+                                      {/* Data di nascita */}
+                                      <div>
+                                        <label className="text-xs text-gray-500 font-medium block mb-1">Data di nascita</label>
+                                        <input
+                                          type="text"
+                                          value={editCustomer.birthDate}
+                                          onChange={(e) => setEditCustomer({ ...editCustomer, birthDate: e.target.value })}
+                                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-light"
+                                          placeholder="YYYY-MM-DD"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Save button for customer data */}
+                                    <button
+                                      onClick={handleSaveCustomerData}
+                                      disabled={savingCustomerData}
+                                      className="mt-4 w-full flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                      <Save size={14} />
+                                      {savingCustomerData ? 'Salvataggio...' : 'Salva dati cliente'}
+                                    </button>
 
                                     {/* Price list selector */}
                                     <div className="mt-4 pt-4 border-t border-gray-100">

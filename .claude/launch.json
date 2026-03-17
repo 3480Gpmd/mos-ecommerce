@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "crm-dev",
-      "runtimeExecutable": "npm.cmd",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev", "-p", "4000"],
       "port": 4000
     }
   ]

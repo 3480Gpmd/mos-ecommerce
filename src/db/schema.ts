@@ -717,6 +717,80 @@ export const catalogs = pgTable('catalogs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// ─── Product Relations (up-sell, cross-sell, accessories) ────────
+export const productRelations = pgTable('product_relations', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  relatedProductId: integer('related_product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  relationType: varchar('relation_type', { length: 20 }).notNull(), // 'upsell' | 'crosssell' | 'accessory' | 'similar'
+  sortOrder: integer('sort_order').default(0),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('product_relations_product_idx').on(table.productId),
+  index('product_relations_type_idx').on(table.relationType),
+  uniqueIndex('product_relations_unique_idx').on(table.productId, table.relatedProductId, table.relationType),
+]);
+
+// ─── Campaigns (marketing campaigns) ───────────────────────────────
+
+export const campaigns = pgTable('campaigns', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  type: varchar('type', { length: 30 }).notNull(), // 'email' | 'banner' | 'discount' | 'bundle'
+  status: varchar('status', { length: 20 }).notNull().default('draft'), // 'draft' | 'active' | 'paused' | 'completed'
+  targetType: varchar('target_type', { length: 30 }).notNull().default('all'), // 'all' | 'segment' | 'purchased_product' | 'purchased_category' | 'inactive_customers' | 'top_spenders'
+  targetValue: text('target_value'), // JSON string with targeting criteria
+  discountType: varchar('discount_type', { length: 20 }), // 'percentage' | 'fixed' | 'free_shipping'
+  discountValue: decimal('discount_value', { precision: 10, scale: 2 }),
+  minOrderAmount: decimal('min_order_amount', { precision: 10, scale: 2 }),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  emailSubject: varchar('email_subject', { length: 500 }),
+  emailBody: text('email_body'),
+  bannerImageUrl: text('banner_image_url'),
+  bannerLink: text('banner_link'),
+  sentCount: integer('sent_count').default(0),
+  openCount: integer('open_count').default(0),
+  clickCount: integer('click_count').default(0),
+  conversionCount: integer('conversion_count').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('campaigns_status_idx').on(table.status),
+  index('campaigns_type_idx').on(table.type),
+  index('campaigns_start_date_idx').on(table.startDate),
+  index('campaigns_end_date_idx').on(table.endDate),
+]);
+
+// ─── Campaign Products (products linked to campaigns) ────────────
+
+export const campaignProducts = pgTable('campaign_products', {
+  id: serial('id').primaryKey(),
+  campaignId: integer('campaign_id').references(() => campaigns.id, { onDelete: 'cascade' }).notNull(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('campaign_products_campaign_idx').on(table.campaignId),
+]);
+
+// ─── Relations for Product Relations and Campaigns ────────────────
+
+export const productRelationsRelations = relations(productRelations, ({ one }) => ({
+  product: one(products, { fields: [productRelations.productId], references: [products.id] }),
+  relatedProduct: one(products, { fields: [productRelations.relatedProductId], references: [products.id], relationName: 'relatedProduct' }),
+}));
+
+export const campaignsRelations = relations(campaigns, ({ many }) => ({
+  campaignProducts: many(campaignProducts),
+}));
+
+export const campaignProductsRelations = relations(campaignProducts, ({ one }) => ({
+  campaign: one(campaigns, { fields: [campaignProducts.campaignId], references: [campaigns.id] }),
+  product: one(products, { fields: [campaignProducts.productId], references: [products.id] }),
+}));
+
 // ─── Types ─────────────────────────────────────────────────────────
 
 export type Product = typeof products.$inferSelect;
@@ -742,3 +816,6 @@ export type SearchSynonym = typeof searchSynonyms.$inferSelect;
 export type UserMessage = typeof userMessages.$inferSelect;
 export type ProductImage = typeof productImages.$inferSelect;
 export type Catalog = typeof catalogs.$inferSelect;
+export type ProductRelation = typeof productRelations.$inferSelect;
+export type Campaign = typeof campaigns.$inferSelect;
+export type CampaignProduct = typeof campaignProducts.$inferSelect;

@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, ShoppingCart, Eye, Package, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Eye, Package, BarChart3, Users } from 'lucide-react';
 
 const stats = [
   {
     title: 'Statistiche Ordini',
-    description: 'Totale ordini, fatturato, media ordine, andamento mensile e distribuzione per stato e metodo di pagamento.',
+    description: 'Totale ordini, fatturato, media ordine, andamento mensile, top clienti per fatturato con filtro personalizzabile.',
     href: '/admin/statistiche/ordini',
     icon: ShoppingCart,
     color: 'text-blue-600 bg-blue-50',
@@ -19,11 +19,18 @@ const stats = [
     color: 'text-green-600 bg-green-50',
   },
   {
-    title: 'Prodotti Più Visti',
-    description: 'Classifica dei 50 prodotti più visualizzati con filtro per periodo.',
+    title: 'Statistiche Prodotti',
+    description: 'Prodotti attivi, esauriti, più ordinati, più visti, sotto scorta e distribuzione per categoria.',
     href: '/admin/statistiche/prodotti',
     icon: Package,
     color: 'text-purple-600 bg-purple-50',
+  },
+  {
+    title: 'Analitiche Clienti',
+    description: 'Segmentazione clienti, valore lifetime, trend acquisizione, carrelli abbandonati e inattività.',
+    href: '/admin/statistiche/clienti',
+    icon: Users,
+    color: 'text-orange-600 bg-orange-50',
   },
 ];
 
@@ -38,7 +45,7 @@ export default function StatistichePage() {
         <h1 className="font-heading text-2xl text-navy">Statistiche</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {stats.map((stat) => (
           <Link
             key={stat.href}

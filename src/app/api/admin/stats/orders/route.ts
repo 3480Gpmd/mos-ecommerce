@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/db';
-import { orders } from '@/db/schema';
-import { sql, gte, count } from 'drizzle-orm';
+import { orders, customers } from '@/db/schema';
+import { sql, gte, lte, count, desc } from 'drizzle-orm';
 
 async function checkAdmin() {
   const session = await auth();
@@ -18,22 +18,30 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const period = searchParams.get('period') || 'month';
+  const startDateParam = searchParams.get('startDate');
+  const endDateParam = searchParams.get('endDate');
 
   // Calculate date range
   const now = new Date();
   let startDate: Date;
+  let endDate = new Date();
 
-  switch (period) {
-    case 'quarter':
-      startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-      break;
-    case 'year':
-      startDate = new Date(now.getFullYear(), 0, 1);
-      break;
-    case 'month':
-    default:
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
+  if (startDateParam && endDateParam) {
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
+  } else {
+    switch (period) {
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      case 'month':
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+    }
   }
 
   // Total orders and revenue
@@ -43,7 +51,15 @@ export async function GET(req: NextRequest) {
     avgOrderValue: sql<string>`COALESCE(AVG(${orders.total}::numeric), 0)`,
   })
     .from(orders)
-    .where(gte(orders.createdAt, startDate));
+    .where(sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}`);
+
+  // Orders this month
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const [monthTotals] = await db.select({
+    monthOrders: count(),
+  })
+    .from(orders)
+    .where(sql`${orders.createdAt} >= ${thisMonthStart} AND ${orders.createdAt} <= ${now}`);
 
   // Orders by status
   const ordersByStatus = await db.select({
@@ -51,7 +67,7 @@ export async function GET(req: NextRequest) {
     count: count(),
   })
     .from(orders)
-    .where(gte(orders.createdAt, startDate))
+    .where(sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}`)
     .groupBy(orders.status);
 
   // Orders by payment method
@@ -60,7 +76,7 @@ export async function GET(req: NextRequest) {
     count: count(),
   })
     .from(orders)
-    .where(gte(orders.createdAt, startDate))
+    .where(sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}`)
     .groupBy(orders.paymentMethod);
 
   // Monthly trend (last 12 months)
@@ -74,15 +90,34 @@ export async function GET(req: NextRequest) {
     .groupBy(sql`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`)
     .orderBy(sql`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`);
 
+  // Top 10 customers by revenue
+  const topCustomers = await db.select({
+    customerId: orders.customerId,
+    customerName: orders.customerName,
+    customerEmail: orders.customerEmail,
+    totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)`,
+    orderCount: sql<number>`count(*)`,
+  })
+    .from(orders)
+    .where(sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}`)
+    .groupBy(orders.customerId, orders.customerName, orders.customerEmail)
+    .orderBy(desc(sql`SUM(${orders.total}::numeric)`))
+    .limit(10);
+
   return NextResponse.json({
     totalOrders: totals.totalOrders,
     totalRevenue: parseFloat(totals.totalRevenue || '0'),
     avgOrderValue: parseFloat(totals.avgOrderValue || '0'),
+    ordersThisMonth: monthTotals.monthOrders,
     ordersByStatus,
     ordersByPaymentMethod,
     monthlyTrend: monthlyTrend.map((m) => ({
       ...m,
       totalRevenue: parseFloat(m.totalRevenue || '0'),
+    })),
+    topCustomers: topCustomers.map((c) => ({
+      ...c,
+      totalSpent: parseFloat(c.totalSpent || '0'),
     })),
   });
 }

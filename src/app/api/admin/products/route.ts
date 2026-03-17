@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { products } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, or, ilike, and, desc, sql } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
 async function checkAdmin() {
@@ -14,6 +14,81 @@ async function checkAdmin() {
     return { authorized: false as const, error: 'Accesso negato', status: 403 };
   }
   return { authorized: true as const };
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const authResult = await checkAdmin();
+    if (!authResult.authorized) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const url = new URL(req.url);
+    const q = url.searchParams.get('q')?.trim() || '';
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
+    const status = url.searchParams.get('status') || 'all';
+    const brand = url.searchParams.get('brand')?.trim() || '';
+
+    const offset = (page - 1) * limit;
+    const conditions: any[] = [];
+
+    // Status filter
+    if (status === 'active') {
+      conditions.push(eq(products.isActive, true));
+    } else if (status === 'inactive') {
+      conditions.push(eq(products.isActive, false));
+    }
+
+    // Brand filter
+    if (brand) {
+      conditions.push(ilike(products.brand, `%${brand}%`));
+    }
+
+    // Search filter across multiple fields
+    if (q) {
+      conditions.push(
+        or(
+          ilike(products.name, `%${q}%`),
+          ilike(products.code, `%${q}%`),
+          ilike(products.brand, `%${q}%`),
+          ilike(products.partNumber, `%${q}%`),
+          ilike(products.barcode, `%${q}%`)
+        )
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(products)
+      .where(whereClause);
+    const total = countResult[0]?.count || 0;
+
+    // Get paginated results
+    const result = await db
+      .select()
+      .from(products)
+      .where(whereClause)
+      .orderBy(desc(products.updatedAt))
+      .limit(limit)
+      .offset(offset);
+
+    return NextResponse.json({
+      products: result,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('GET /api/admin/products error:', error);
+    return NextResponse.json({ error: 'Errore nel recupero prodotti' }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
@@ -38,6 +113,7 @@ export async function PUT(req: NextRequest) {
       'groupId', 'categoryId', 'subcategoryId',
       'isFeatured', 'featuredSort', 'isSuperPrice', 'superPrice',
       'isNew', 'newUntilDate', 'promoStartDate', 'promoEndDate',
+      'minOrderQty', 'orderMultiple', 'packSize',
     ];
 
     for (const key of editableKeys) {

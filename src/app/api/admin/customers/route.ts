@@ -204,7 +204,7 @@ export async function PUT(req: NextRequest) {
       'priceList', 'customerType', 'firstName', 'lastName',
       'companyName', 'vatNumber', 'fiscalCode', 'sdiCode',
       'pecEmail', 'phone', 'address', 'postcode', 'city',
-      'province', 'easyfattCode', 'isActive', 'role',
+      'province', 'easyfattCode', 'birthDate', 'isActive', 'role',
     ];
 
     for (const key of editableKeys) {
