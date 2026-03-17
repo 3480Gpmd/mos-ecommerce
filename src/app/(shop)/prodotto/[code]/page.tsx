@@ -7,6 +7,10 @@ import { ShoppingCart, Heart, Minus, Plus, Check, ArrowLeft, Info, Package } fro
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/db/schema';
+import type { Metadata } from 'next';
+
+// generateMetadata is exported from a separate server component below
+// This is the client component for the page content
 
 export default function ProductPage() {
   const { code } = useParams<{ code: string }>();

@@ -2,8 +2,18 @@ import type { Metadata } from 'next';
 import { PageTitle } from '@/components/ui/page-title';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy - MOS Milano Offre Servizi',
-  description: 'Informativa sull\'utilizzo dei cookie sul sito MOS MilanoOffreServizi.',
+  title: 'Cookie Policy | Milano Offre Servizi',
+  description: 'Informativa sull\'utilizzo dei cookie sul sito Milano Offre Servizi. Cookie tecnici, analitici e di terze parti.',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/cookie-policy',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/cookie-policy',
+    title: 'Cookie Policy | Milano Offre Servizi',
+    description: 'Informativa sull\'utilizzo dei cookie sul sito',
+    siteName: 'Milano Offre Servizi',
+  },
 };
 
 export default function CookiePolicyPage() {

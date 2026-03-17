@@ -2,8 +2,18 @@ import type { Metadata } from 'next';
 import { PageTitle } from '@/components/ui/page-title';
 
 export const metadata: Metadata = {
-  title: 'Condizioni di Vendita - MOS Milano Offre Servizi',
-  description: 'Termini e condizioni generali di vendita di MOS MilanoOffreServizi.',
+  title: 'Condizioni di Vendita | Milano Offre Servizi',
+  description: 'Termini e condizioni generali di vendita di Milano Offre Servizi. Diritti di recesso, garanzie, metodi di pagamento e consegna.',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/condizioni-vendita',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/condizioni-vendita',
+    title: 'Condizioni di Vendita | Milano Offre Servizi',
+    description: 'Termini e condizioni generali di vendita di Milano Offre Servizi',
+    siteName: 'Milano Offre Servizi',
+  },
 };
 
 export default function CondizioniVenditaPage() {

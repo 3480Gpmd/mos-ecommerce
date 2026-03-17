@@ -1,5 +1,22 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { CatalogoContent } from './catalogo-content';
+
+export const metadata: Metadata = {
+  title: 'Catalogo Prodotti | Milano Offre Servizi',
+  description: 'Catalogo completo di oltre 25.000 prodotti: forniture ufficio, caffè, acqua e bevande. Prezzi competitivi e consegna rapida a Milano.',
+  keywords: 'catalogo prodotti, forniture ufficio, caffè online, acqua, bevande, prezzi',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/catalogo',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/catalogo',
+    title: 'Catalogo Prodotti | Milano Offre Servizi',
+    description: 'Catalogo completo di oltre 25.000 prodotti: forniture ufficio, caffè, acqua e bevande',
+    siteName: 'Milano Offre Servizi',
+  },
+};
 
 export default function CatalogoPage() {
   return (

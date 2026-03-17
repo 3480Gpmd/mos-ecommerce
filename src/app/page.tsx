@@ -1,8 +1,18 @@
+import type { Metadata } from 'next';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Truck, Shield, Headphones, Coffee, Droplets, Printer } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Milano Offre Servizi - Forniture Ufficio, Caffè, Acqua',
+  description: 'E-commerce B2B/B2C per forniture ufficio, caffè e acqua. Consegna rapida a Milano e provincia. Oltre 25.000 prodotti a prezzi competitivi. Preventivi personalizzati per aziende.',
+  keywords: 'forniture ufficio Milano, caffè online, acqua boccioni, consegna rapida, e-commerce, B2B, B2C',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it',
+  },
+};
 
 export default function HomePage() {
   return (

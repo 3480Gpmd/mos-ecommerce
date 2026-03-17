@@ -39,7 +39,11 @@ export async function GET() {
         isActive: giftRules.isActive,
         createdAt: giftRules.createdAt,
         giftProductName: sql<string>`(SELECT ${products.name} FROM ${products} WHERE ${products.id} = ${giftRules.giftProductId})`.as('gift_product_name'),
+        giftProductCode: sql<string>`(SELECT ${products.code} FROM ${products} WHERE ${products.id} = ${giftRules.giftProductId})`.as('gift_product_code'),
+        giftProductPrice: sql<string>`(SELECT ${products.priceNet} FROM ${products} WHERE ${products.id} = ${giftRules.giftProductId})`.as('gift_product_price'),
         triggerProductName: sql<string>`(SELECT ${products.name} FROM ${products} WHERE ${products.id} = ${giftRules.triggerProductId})`.as('trigger_product_name'),
+        triggerProductCode: sql<string>`(SELECT ${products.code} FROM ${products} WHERE ${products.id} = ${giftRules.triggerProductId})`.as('trigger_product_code'),
+        triggerProductPrice: sql<string>`(SELECT ${products.priceNet} FROM ${products} WHERE ${products.id} = ${giftRules.triggerProductId})`.as('trigger_product_price'),
       })
       .from(giftRules)
       .orderBy(desc(giftRules.createdAt));

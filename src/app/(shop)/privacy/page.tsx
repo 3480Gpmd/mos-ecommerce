@@ -2,8 +2,18 @@ import type { Metadata } from 'next';
 import { PageTitle } from '@/components/ui/page-title';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - MOS Milano Offre Servizi',
-  description: 'Informativa sulla privacy e trattamento dei dati personali di MOS MilanoOffreServizi.',
+  title: 'Informativa Privacy | Milano Offre Servizi',
+  description: 'Informativa sulla privacy e trattamento dei dati personali di Milano Offre Servizi secondo il GDPR.',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/privacy',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/privacy',
+    title: 'Informativa Privacy | Milano Offre Servizi',
+    description: 'Informativa sulla privacy e trattamento dei dati personali',
+    siteName: 'Milano Offre Servizi',
+  },
 };
 
 export default function PrivacyPage() {

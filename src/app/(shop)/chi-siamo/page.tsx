@@ -3,8 +3,18 @@ import Image from 'next/image';
 import { PageTitle } from '@/components/ui/page-title';
 
 export const metadata = {
-  title: 'Chi Siamo - Milano Offre Servizi',
-  description: 'Scopri MOS MilanoOffreServizi: la storia di Davide e la passione per il servizio al cliente.',
+  title: 'Chi Siamo | Milano Offre Servizi',
+  description: 'Scopri Milano Offre Servizi: la storia di Davide e la passione per il servizio al cliente. Dal 2009 al tuo fianco.',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/chi-siamo',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/chi-siamo',
+    title: 'Chi Siamo | Milano Offre Servizi',
+    description: 'Scopri Milano Offre Servizi: la storia di Davide e la passione per il servizio al cliente',
+    siteName: 'Milano Offre Servizi',
+  },
 };
 
 export default function ChiSiamoPage() {

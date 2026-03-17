@@ -143,6 +143,11 @@ export const customers = pgTable('customers', {
   priceList: varchar('price_list', { length: 50 }).default('standard'),
   easyfattCode: varchar('easyfatt_code', { length: 50 }),
   crmId: varchar('crm_id', { length: 100 }),
+  // Parametri commerciali cliente
+  freeShipping: boolean('free_shipping').default(false).notNull(),
+  creditLimit: decimal('credit_limit', { precision: 10, scale: 2 }), // null = no limit, 0 = unlimited, >0 = fixed amount
+  allowedPaymentMethods: text('allowed_payment_methods'), // comma-separated: 'carta_credito,bonifico_vista_fattura,bonifico_anticipato'
+  welcomeEmailSent: boolean('welcome_email_sent').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [

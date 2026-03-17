@@ -3,8 +3,18 @@ import type { Metadata } from 'next';
 import { PageTitle } from '@/components/ui/page-title';
 
 export const metadata: Metadata = {
-  title: 'Contatti - MOS Milano Offre Servizi',
-  description: 'Contattaci per informazioni, preventivi o assistenza. Telefono, email e indirizzo di Milano Offre Servizi.',
+  title: 'Contatti | Milano Offre Servizi',
+  description: 'Contattaci per informazioni, preventivi o assistenza. Telefono 02 6473060, email info@milanooffreservizi.it. Sede a Milano.',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/contatti',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/contatti',
+    title: 'Contatti | Milano Offre Servizi',
+    description: 'Contattaci per informazioni, preventivi o assistenza. Siamo a tua disposizione.',
+    siteName: 'Milano Offre Servizi',
+  },
 };
 
 export default function ContattiPage() {

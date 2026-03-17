@@ -3,8 +3,18 @@ import { PageTitle } from '@/components/ui/page-title';
 import { Truck, CreditCard, Clock, MapPin } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Consegna e Pagamento - MOS Milano Offre Servizi',
-  description: 'Informazioni su metodi di consegna, tempi di spedizione e modalità di pagamento.',
+  title: 'Consegna e Pagamento | Milano Offre Servizi',
+  description: 'Informazioni su metodi di consegna, tempi di spedizione e modalità di pagamento. Consegna rapida a Milano e provincia.',
+  alternates: {
+    canonical: 'https://milanooffreservizi-ecommerce.it/consegna-pagamento',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://milanooffreservizi-ecommerce.it/consegna-pagamento',
+    title: 'Consegna e Pagamento | Milano Offre Servizi',
+    description: 'Informazioni su metodi di consegna, tempi di spedizione e modalità di pagamento',
+    siteName: 'Milano Offre Servizi',
+  },
 };
 
 export default function ConsegnaPagamentoPage() {
