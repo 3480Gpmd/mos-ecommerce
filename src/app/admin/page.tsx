@@ -69,7 +69,7 @@ export default async function AdminDashboard() {
         SELECT ${orders.customerId} as cid, MAX(${orders.createdAt}) as last_order
         FROM ${orders}
         GROUP BY ${orders.customerId}
-        HAVING MAX(${orders.createdAt}) < ${sixtyDaysAgo}
+        HAVING MAX(${orders.createdAt}) < ${sixtyDaysAgo.toISOString()}::timestamp
       ) sub
     `),
     // Carrelli abbandonati attivi (2+ ore)
