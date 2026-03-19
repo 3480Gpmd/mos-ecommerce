@@ -3,9 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Trash2, Minus, Plus, ShoppingCart, AlertTriangle, MapPin, Zap } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, AlertTriangle, MapPin, Zap, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/ui/page-title';
+
+interface GiftItem {
+  ruleId: number;
+  ruleName: string;
+  triggerType: string;
+  triggerValue: string | null;
+  giftProductId: number;
+  giftProductName: string;
+  giftProductImage: string | null;
+  giftProductCode: string;
+  giftQty: number;
+}
 
 interface CartItem {
   id: number;
@@ -49,6 +61,7 @@ export default function CheckoutPage() {
   });
   const [orderNotes, setOrderNotes] = useState('');
   const [addressLoaded, setAddressLoaded] = useState(false);
+  const [gifts, setGifts] = useState<GiftItem[]>([]);
 
   const customerType = (session?.user as { customerType?: string } | undefined)?.customerType || 'privato';
 
@@ -66,10 +79,22 @@ export default function CheckoutPage() {
       const res = await fetch('/api/cart');
       const data = await res.json();
       setItems(data.items || []);
+      // Fetch applicable gifts
+      fetchGifts();
     } catch {
       // ignore
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGifts = async () => {
+    try {
+      const res = await fetch('/api/cart/gifts');
+      const data = await res.json();
+      setGifts(data.gifts || []);
+    } catch {
+      // ignore
     }
   };
 
@@ -279,6 +304,41 @@ export default function CheckoutPage() {
                 <p className="text-xs text-orange-600 mt-1">
                   Organizzeremo una consegna prioritaria per questi articoli.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Omaggi applicabili */}
+          {gifts.length > 0 && (
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Gift size={20} className="text-green-600" />
+                <h3 className="font-bold text-green-800">
+                  {gifts.length === 1 ? 'Omaggio incluso nel tuo ordine!' : `${gifts.length} omaggi inclusi nel tuo ordine!`}
+                </h3>
+              </div>
+              <div className="space-y-2">
+                {gifts.map((gift) => (
+                  <div key={gift.ruleId} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-green-100">
+                    <div className="w-12 h-12 bg-green-50 rounded-lg flex-shrink-0 flex items-center justify-center">
+                      {gift.giftProductImage ? (
+                        <img src={gift.giftProductImage} alt="" className="w-full h-full object-contain p-1" />
+                      ) : (
+                        <Gift size={20} className="text-green-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{gift.giftProductName}</p>
+                      <p className="text-xs text-green-600">
+                        {gift.giftQty} pz in omaggio
+                        {gift.triggerType === 'amount' && gift.triggerValue && (
+                          <span> &middot; Ordine da {formatCurrency(parseFloat(gift.triggerValue))}</span>
+                        )}
+                      </p>
+                    </div>
+                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">GRATIS</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -556,6 +616,19 @@ export default function CheckoutPage() {
                 {urgentItems.map(item => (
                   <p key={item.id} className="text-xs text-orange-600 ml-5">
                     - {item.product.name} ({item.qty} {item.product.unit || 'pz'})
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {gifts.length > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="font-medium text-green-700 flex items-center gap-1 mb-1">
+                  <Gift size={14} /> Omaggi inclusi:
+                </p>
+                {gifts.map(gift => (
+                  <p key={gift.ruleId} className="text-xs text-green-600 ml-5">
+                    - {gift.giftProductName} ({gift.giftQty} pz) — GRATIS
                   </p>
                 ))}
               </div>

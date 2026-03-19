@@ -27,6 +27,7 @@ export function Header() {
   const [freddeOpen, setFreddeOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>([]);
+  const [cartCount, setCartCount] = useState(0);
   const catalogTimeout = useRef<NodeJS.Timeout | null>(null);
   const caffeTimeout = useRef<NodeJS.Timeout | null>(null);
   const freddeTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -38,6 +39,24 @@ export function Header() {
       .then((data) => setGroups(data.groups || []))
       .catch(() => {});
   }, []);
+
+  // Fetch cart count
+  useEffect(() => {
+    if (!session?.user) return;
+    const fetchCount = () => {
+      fetch('/api/cart')
+        .then((r) => r.json())
+        .then((data) => setCartCount((data.items || []).reduce((s: number, i: { qty: number }) => s + i.qty, 0)))
+        .catch(() => {});
+    };
+    fetchCount();
+    // Ascolta evento custom per aggiornare il contatore
+    const handler = () => fetchCount();
+    window.addEventListener('cart-updated', handler);
+    // Polling leggero ogni 30s
+    const interval = setInterval(fetchCount, 30000);
+    return () => { window.removeEventListener('cart-updated', handler); clearInterval(interval); };
+  }, [session]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +144,11 @@ export function Header() {
                 </Link>
                 <Link href="/checkout" className="flex items-center gap-1 text-sm hover:text-blue-light transition-colors relative">
                   <ShoppingCart size={20} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                 </Link>
                 <Link href="/profilo" className="hidden sm:flex items-center gap-1 text-sm hover:text-blue-light transition-colors">
                   <User size={20} />

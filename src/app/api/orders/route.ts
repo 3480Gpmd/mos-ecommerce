@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { orders, orderItems, customers, cartItems, products, crmSyncQueue } from '@/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { orders, orderItems, customers, cartItems, products, crmSyncQueue, giftRules } from '@/db/schema';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { generateOrderNumber } from '@/lib/utils';
@@ -121,6 +121,61 @@ export async function POST(req: NextRequest) {
     const shippingCost = subtotal >= 100 ? 0 : 8.90;
     const total = subtotal + vatAmount + shippingCost;
 
+    // Check gift rules
+    const cartProductIds = cart.map(({ product: p }) => p.id);
+    const cartCategoryIds = cart.map(({ product: p }) => p.categoryId).filter(Boolean) as number[];
+    const now = new Date();
+
+    const activeGiftRules = await db
+      .select({
+        id: giftRules.id,
+        name: giftRules.name,
+        triggerType: giftRules.triggerType,
+        triggerValue: giftRules.triggerValue,
+        triggerProductId: giftRules.triggerProductId,
+        triggerCategoryId: giftRules.triggerCategoryId,
+        giftProductId: giftRules.giftProductId,
+        giftQty: giftRules.giftQty,
+        minOrderAmount: giftRules.minOrderAmount,
+        startDate: giftRules.startDate,
+        endDate: giftRules.endDate,
+      })
+      .from(giftRules)
+      .where(eq(giftRules.isActive, true));
+
+    const applicableGifts = activeGiftRules.filter((rule) => {
+      if (rule.startDate && new Date(rule.startDate) > now) return false;
+      if (rule.endDate && new Date(rule.endDate) < now) return false;
+      if (rule.minOrderAmount && subtotal < parseFloat(String(rule.minOrderAmount))) return false;
+      switch (rule.triggerType) {
+        case 'amount': return rule.triggerValue && subtotal >= parseFloat(String(rule.triggerValue));
+        case 'product': return rule.triggerProductId && cartProductIds.includes(rule.triggerProductId);
+        case 'category': return rule.triggerCategoryId && cartCategoryIds.includes(rule.triggerCategoryId);
+        default: return false;
+      }
+    });
+
+    // Fetch gift product details
+    const giftItemsData: typeof itemsData = [];
+    for (const gift of applicableGifts) {
+      const [giftProduct] = await db.select().from(products).where(eq(products.id, gift.giftProductId)).limit(1);
+      if (giftProduct) {
+        giftItemsData.push({
+          productId: giftProduct.id,
+          productCode: giftProduct.code,
+          productName: `[OMAGGIO] ${giftProduct.name}`,
+          productBrand: giftProduct.brand,
+          unit: giftProduct.unit || 'PZ',
+          qty: gift.giftQty,
+          priceUnit: '0',
+          discountPct: '100',
+          vatPct: String(parseFloat(String(giftProduct.vatCode))),
+          lineTotal: '0',
+          isUrgent: false,
+        });
+      }
+    }
+
     const orderNumber = generateOrderNumber();
 
     // Create order
@@ -152,9 +207,10 @@ export async function POST(req: NextRequest) {
       altShippingProvince: parsed.data.altShippingProvince || null,
     }).returning();
 
-    // Create order items
+    // Create order items (cart items + gift items)
+    const allItems = [...itemsData, ...giftItemsData];
     await db.insert(orderItems).values(
-      itemsData.map((item) => ({
+      allItems.map((item) => ({
         ...item,
         orderId: order.id,
       }))
@@ -183,7 +239,7 @@ export async function POST(req: NextRequest) {
 
     // Prepara dati email
     const customerName = customer.companyName || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email;
-    const emailItems = itemsData.map((item) => ({
+    const emailItems = allItems.map((item) => ({
       code: item.productCode || '',
       name: item.productName || '',
       qty: item.qty,

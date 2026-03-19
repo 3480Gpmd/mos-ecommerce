@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Heart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail, CheckCircle, AlertTriangle, XCircle, Clock, Minus, Plus, X, Check, Info } from 'lucide-react';
+import { ShoppingCart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail, CheckCircle, AlertTriangle, XCircle, Clock, Minus, Plus, Check, Info } from 'lucide-react';
 import type { Product } from '@/db/schema';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -72,13 +72,12 @@ export function ProductCard({ product }: { product: Product }) {
   const minQty = product.minOrderQty ?? 1;
   const multiple = product.orderMultiple ?? 1;
 
-  const [showModal, setShowModal] = useState(false);
   const [qty, setQty] = useState(minQty);
   const [added, setAdded] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [showQtySelector, setShowQtySelector] = useState(false);
 
   const adjustQty = useCallback((newQty: number) => {
-    // Arrotonda al multiplo più vicino (verso l'alto)
     const rounded = Math.max(minQty, Math.ceil(newQty / multiple) * multiple);
     setQty(rounded);
   }, [minQty, multiple]);
@@ -92,13 +91,12 @@ export function ProductCard({ product }: { product: Product }) {
       return;
     }
 
-    // Se il minimo è >1 o c'è un multiplo, mostra il modal
-    if (minQty > 1 || multiple > 1) {
+    // Mostra sempre il selettore quantità inline
+    if (!showQtySelector) {
       setQty(minQty);
-      setShowModal(true);
+      setShowQtySelector(true);
     } else {
-      // Aggiunta rapida qty=1
-      addToCart(1);
+      addToCart(qty);
     }
   };
 
@@ -112,7 +110,8 @@ export function ProductCard({ product }: { product: Product }) {
       });
       if (res.ok) {
         setAdded(true);
-        setShowModal(false);
+        setShowQtySelector(false);
+        window.dispatchEvent(new Event('cart-updated'));
         setTimeout(() => setAdded(false), 2000);
       }
     } catch {
@@ -199,114 +198,65 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-lg font-bold text-navy">
-                {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(displayPrice)}
-              </p>
-              <p className="text-xs text-gray-500">{priceLabel}</p>
+          <div>
+            <div className="flex items-end justify-between mb-2">
+              <div>
+                <p className="text-lg font-bold text-navy">
+                  {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(displayPrice)}
+                </p>
+                <p className="text-xs text-gray-500">{priceLabel}</p>
+              </div>
+              {!showQtySelector && (
+                <button
+                  onClick={handleCartClick}
+                  className={`p-2 rounded-lg transition-colors ${
+                    added
+                      ? 'bg-green-600 text-white'
+                      : 'bg-blue text-white hover:bg-blue-light'
+                  }`}
+                  title={added ? 'Aggiunto!' : 'Aggiungi al carrello'}
+                >
+                  {added ? <Check size={16} /> : <ShoppingCart size={16} />}
+                </button>
+              )}
             </div>
-            <button
-              onClick={handleCartClick}
-              className={`p-2 rounded-lg transition-colors ${
-                added
-                  ? 'bg-green-600 text-white'
-                  : 'bg-blue text-white hover:bg-blue-light'
-              }`}
-              title={added ? 'Aggiunto!' : 'Aggiungi al carrello'}
-            >
-              {added ? <Check size={16} /> : <ShoppingCart size={16} />}
-            </button>
+            {showQtySelector && (
+              <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); adjustQty(qty - multiple); }}
+                  disabled={qty <= minQty}
+                  className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+                >
+                  <Minus size={12} />
+                </button>
+                <input
+                  type="number"
+                  value={qty}
+                  onChange={(e) => { e.stopPropagation(); adjustQty(parseInt(e.target.value) || minQty); }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="w-12 text-center text-sm font-bold border border-gray-300 rounded py-0.5 focus:outline-none focus:ring-1 focus:ring-blue"
+                  min={minQty}
+                  step={multiple}
+                />
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); adjustQty(qty + multiple); }}
+                  className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-600 hover:bg-gray-100 text-xs"
+                >
+                  <Plus size={12} />
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(qty); }}
+                  disabled={adding}
+                  className="flex-1 bg-blue text-white text-xs font-bold py-1.5 px-2 rounded hover:bg-blue-light transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  {adding ? '...' : <><ShoppingCart size={12} /> Aggiungi</>}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </Link>
 
-      {/* Modal quantità */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={(e) => { e.stopPropagation(); setShowModal(false); }}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">Quantità</h3>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
-                <X size={18} />
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-600 mb-1 line-clamp-2">{product.name}</p>
-
-            {/* Info minimo ordine */}
-            <div className="bg-blue/5 border border-blue/20 rounded-lg p-3 mb-4 space-y-1">
-              <div className="flex items-center gap-2 text-sm">
-                <Info size={14} className="text-blue-500 flex-shrink-0" />
-                <span className="text-blue-700">Quantità minima: <strong>{minQty} pz</strong></span>
-              </div>
-              {multiple > 1 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Info size={14} className="text-blue-500 flex-shrink-0" />
-                  <span className="text-blue-700">Ordina multipli di: <strong>{multiple} pz</strong></span>
-                </div>
-              )}
-              {product.packSize && product.packSize > 1 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Package size={14} className="text-blue-500 flex-shrink-0" />
-                  <span className="text-blue-700">Confezione: <strong>{product.packSize} pz</strong></span>
-                </div>
-              )}
-            </div>
-
-            {/* Selettore quantità */}
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <button
-                onClick={() => adjustQty(qty - multiple)}
-                disabled={qty <= minQty}
-                className="w-10 h-10 flex items-center justify-center border rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <Minus size={16} />
-              </button>
-              <input
-                type="number"
-                value={qty}
-                onChange={(e) => adjustQty(parseInt(e.target.value) || minQty)}
-                className="w-20 text-center text-xl font-bold border rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-blue"
-                min={minQty}
-                step={multiple}
-              />
-              <button
-                onClick={() => adjustQty(qty + multiple)}
-                className="w-10 h-10 flex items-center justify-center border rounded-lg hover:bg-gray-50"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-
-            {/* Totale riga */}
-            <p className="text-center text-sm text-gray-500 mb-4">
-              Totale: <span className="font-bold text-navy text-lg">
-                {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(displayPrice * qty)}
-              </span>
-            </p>
-
-            <button
-              onClick={() => addToCart(qty)}
-              disabled={adding}
-              className="w-full bg-blue text-white font-bold py-3 rounded-lg hover:bg-blue-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {adding ? 'Aggiunta...' : (
-                <>
-                  <ShoppingCart size={18} />
-                  Aggiungi {qty} pz al carrello
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
