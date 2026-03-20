@@ -15,6 +15,7 @@ const createOrderSchema = z.object({
   shippingProvince: z.string().min(1).max(2),
   paymentMethod: z.enum(['paypal', 'teamsystem', 'bonifico']),
   notes: z.string().optional(),
+  selectedGiftRuleId: z.number().optional(),
   isUrgent: z.boolean().optional().default(false),
   altShipping: z.boolean().optional().default(false),
   altShippingName: z.string().optional(),
@@ -121,58 +122,60 @@ export async function POST(req: NextRequest) {
     const shippingCost = subtotal >= 100 ? 0 : 8.90;
     const total = subtotal + vatAmount + shippingCost;
 
-    // Check gift rules
-    const cartProductIds = cart.map(({ product: p }) => p.id);
-    const cartCategoryIds = cart.map(({ product: p }) => p.categoryId).filter(Boolean) as number[];
-    const now = new Date();
-
-    const activeGiftRules = await db
-      .select({
-        id: giftRules.id,
-        name: giftRules.name,
-        triggerType: giftRules.triggerType,
-        triggerValue: giftRules.triggerValue,
-        triggerProductId: giftRules.triggerProductId,
-        triggerCategoryId: giftRules.triggerCategoryId,
-        giftProductId: giftRules.giftProductId,
-        giftQty: giftRules.giftQty,
-        minOrderAmount: giftRules.minOrderAmount,
-        startDate: giftRules.startDate,
-        endDate: giftRules.endDate,
-      })
-      .from(giftRules)
-      .where(eq(giftRules.isActive, true));
-
-    const applicableGifts = activeGiftRules.filter((rule) => {
-      if (rule.startDate && new Date(rule.startDate) > now) return false;
-      if (rule.endDate && new Date(rule.endDate) < now) return false;
-      if (rule.minOrderAmount && subtotal < parseFloat(String(rule.minOrderAmount))) return false;
-      switch (rule.triggerType) {
-        case 'amount': return rule.triggerValue && subtotal >= parseFloat(String(rule.triggerValue));
-        case 'product': return rule.triggerProductId && cartProductIds.includes(rule.triggerProductId);
-        case 'category': return rule.triggerCategoryId && cartCategoryIds.includes(rule.triggerCategoryId);
-        default: return false;
-      }
-    });
-
-    // Fetch gift product details
+    // Check selected gift rule (customer chose this gift in checkout)
     const giftItemsData: typeof itemsData = [];
-    for (const gift of applicableGifts) {
-      const [giftProduct] = await db.select().from(products).where(eq(products.id, gift.giftProductId)).limit(1);
-      if (giftProduct) {
-        giftItemsData.push({
-          productId: giftProduct.id,
-          productCode: giftProduct.code,
-          productName: `[OMAGGIO] ${giftProduct.name}`,
-          productBrand: giftProduct.brand,
-          unit: giftProduct.unit || 'PZ',
-          qty: gift.giftQty,
-          priceUnit: '0',
-          discountPct: '100',
-          vatPct: String(parseFloat(String(giftProduct.vatCode))),
-          lineTotal: '0',
-          isUrgent: false,
-        });
+    if (parsed.data.selectedGiftRuleId) {
+      const [selectedRule] = await db
+        .select()
+        .from(giftRules)
+        .where(and(eq(giftRules.id, parsed.data.selectedGiftRuleId), eq(giftRules.isActive, true)))
+        .limit(1);
+
+      if (selectedRule) {
+        // Verify the gift rule is still applicable
+        const now = new Date();
+        const cartProductIds = cart.map(({ product: p }) => p.id);
+        const cartCategoryIds = cart.map(({ product: p }) => p.categoryId).filter(Boolean) as number[];
+        let ruleValid = true;
+
+        if (selectedRule.startDate && new Date(selectedRule.startDate) > now) ruleValid = false;
+        if (selectedRule.endDate && new Date(selectedRule.endDate) < now) ruleValid = false;
+        if (selectedRule.minOrderAmount && subtotal < parseFloat(String(selectedRule.minOrderAmount))) ruleValid = false;
+
+        if (ruleValid) {
+          switch (selectedRule.triggerType) {
+            case 'amount':
+              ruleValid = !!selectedRule.triggerValue && subtotal >= parseFloat(String(selectedRule.triggerValue));
+              break;
+            case 'product':
+              ruleValid = !!selectedRule.triggerProductId && cartProductIds.includes(selectedRule.triggerProductId);
+              break;
+            case 'category':
+              ruleValid = !!selectedRule.triggerCategoryId && cartCategoryIds.includes(selectedRule.triggerCategoryId);
+              break;
+            default:
+              ruleValid = false;
+          }
+        }
+
+        if (ruleValid) {
+          const [giftProduct] = await db.select().from(products).where(eq(products.id, selectedRule.giftProductId)).limit(1);
+          if (giftProduct) {
+            giftItemsData.push({
+              productId: giftProduct.id,
+              productCode: giftProduct.code,
+              productName: `[OMAGGIO] ${giftProduct.name}`,
+              productBrand: giftProduct.brand,
+              unit: giftProduct.unit || 'PZ',
+              qty: selectedRule.giftQty,
+              priceUnit: '0',
+              discountPct: '100',
+              vatPct: String(parseFloat(String(giftProduct.vatCode))),
+              lineTotal: '0',
+              isUrgent: false,
+            });
+          }
+        }
       }
     }
 

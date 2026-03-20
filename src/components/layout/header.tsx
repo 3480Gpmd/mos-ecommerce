@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, UserPlus, LayoutGrid, Coffee, GlassWater } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, UserPlus, LayoutGrid, Coffee, GlassWater, Wrench } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -25,12 +25,14 @@ export function Header() {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [caffeOpen, setCaffeOpen] = useState(false);
   const [freddeOpen, setFreddeOpen] = useState(false);
+  const [serviziOpen, setServiziOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const catalogTimeout = useRef<NodeJS.Timeout | null>(null);
   const caffeTimeout = useRef<NodeJS.Timeout | null>(null);
   const freddeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const serviziTimeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -91,6 +93,15 @@ export function Header() {
 
   const handleFreddeLeave = () => {
     freddeTimeout.current = setTimeout(() => setFreddeOpen(false), 250);
+  };
+
+  const handleServiziEnter = () => {
+    if (serviziTimeout.current) clearTimeout(serviziTimeout.current);
+    setServiziOpen(true);
+  };
+
+  const handleServiziLeave = () => {
+    serviziTimeout.current = setTimeout(() => setServiziOpen(false), 250);
   };
 
   const caffeGroup = groups.find((g) => g.slug === 'caffe-e-bevande-calde');
@@ -199,6 +210,39 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4">
           {/* Desktop menu - una riga con mega-menu catalogo */}
           <ul className="hidden md:flex items-center gap-0">
+            {/* Servizi */}
+            <li
+              className="relative"
+              onMouseEnter={handleServiziEnter}
+              onMouseLeave={handleServiziLeave}
+            >
+              <button
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-white/10 hover:bg-white/20 rounded transition-colors"
+              >
+                <Wrench size={18} />
+                Servizi
+                <ChevronDown size={14} className={`transition-transform ${serviziOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {serviziOpen && (
+                <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
+                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Caffè e Bevande Calde</span>
+                  <ul className="space-y-1 mb-3">
+                    <li><Link href="/servizi/macchine-caffe-comodato" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setServiziOpen(false)}>Macchine del caffè in comodato</Link></li>
+                    <li><Link href="/servizi/lavazza-firma" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setServiziOpen(false)}>Lavazza Firma</Link></li>
+                    <li><Link href="/servizi/caffe-borbone" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setServiziOpen(false)}>Caffè Borbone</Link></li>
+                    <li><Link href="/servizi/bevande-gise" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setServiziOpen(false)}>Bevande Gise</Link></li>
+                  </ul>
+                  <div className="border-t border-gray-100 pt-3">
+                    <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Bevande Fredde</span>
+                    <ul className="space-y-1">
+                      <li><Link href="/servizi/dispenser-boccioni" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setServiziOpen(false)}>Dispenser e boccioni</Link></li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </li>
+
             {/* Caffè e Bevande Calde */}
             {caffeGroup && (
               <li
@@ -216,16 +260,7 @@ export function Header() {
 
                 {caffeOpen && (
                   <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
-                    <div className="mb-2">
-                      <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Servizi</span>
-                      <ul className="space-y-1">
-                        <li><Link href="/servizi/macchine-caffe-comodato" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Macchine del caffè in comodato</Link></li>
-                        <li><Link href="/servizi/lavazza-firma" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Lavazza Firma</Link></li>
-                        <li><Link href="/servizi/caffe-borbone" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Caffè Borbone</Link></li>
-                        <li><Link href="/servizi/bevande-gise" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setCaffeOpen(false)}>Bevande Gise</Link></li>
-                      </ul>
-                    </div>
-                    <div className="border-t border-gray-100 pt-2">
+                    <div>
                       <Link
                         href={`/catalogo?group=${caffeGroup.slug}`}
                         className="block text-sm font-bold text-navy hover:text-blue transition-colors mb-2"
@@ -271,13 +306,7 @@ export function Header() {
 
                 {freddeOpen && (
                   <div className="absolute left-0 top-full z-50 bg-white shadow-2xl rounded-b-xl border border-gray-200 w-[320px] p-4">
-                    <div className="mb-2">
-                      <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Servizi</span>
-                      <ul className="space-y-1">
-                        <li><Link href="/servizi/dispenser-boccioni" className="block text-sm text-gray-600 hover:text-blue hover:bg-blue/5 px-2 py-1.5 rounded transition-colors" onClick={() => setFreddeOpen(false)}>Dispenser e boccioni</Link></li>
-                      </ul>
-                    </div>
-                    <div className="border-t border-gray-100 pt-2">
+                    <div>
                       <Link
                         href={`/catalogo?group=${freddeGroup.slug}`}
                         className="block text-sm font-bold text-navy hover:text-blue transition-colors mb-2"
@@ -400,6 +429,19 @@ export function Header() {
           {/* Mobile menu */}
           {menuOpen && (
             <ul className="md:hidden flex flex-col py-2">
+              <li>
+                <Link href="/servizi/macchine-caffe-comodato" className="block px-3 py-2 text-sm text-white font-bold hover:bg-white/10" onClick={() => setMenuOpen(false)}>
+                  Servizi
+                </Link>
+                <ul className="pl-4">
+                  <li><Link href="/servizi/macchine-caffe-comodato" className="block px-3 py-1.5 text-xs text-white/70 hover:bg-white/10" onClick={() => setMenuOpen(false)}>Macchine caffè in comodato</Link></li>
+                  <li><Link href="/servizi/lavazza-firma" className="block px-3 py-1.5 text-xs text-white/70 hover:bg-white/10" onClick={() => setMenuOpen(false)}>Lavazza Firma</Link></li>
+                  <li><Link href="/servizi/caffe-borbone" className="block px-3 py-1.5 text-xs text-white/70 hover:bg-white/10" onClick={() => setMenuOpen(false)}>Caffè Borbone</Link></li>
+                  <li><Link href="/servizi/bevande-gise" className="block px-3 py-1.5 text-xs text-white/70 hover:bg-white/10" onClick={() => setMenuOpen(false)}>Bevande Gise</Link></li>
+                  <li><Link href="/servizi/dispenser-boccioni" className="block px-3 py-1.5 text-xs text-white/70 hover:bg-white/10" onClick={() => setMenuOpen(false)}>Dispenser e boccioni</Link></li>
+                </ul>
+              </li>
+              <li className="border-t border-white/10 mt-1 pt-1"></li>
               {groups.map((group) => (
                 <li key={group.slug}>
                   <Link

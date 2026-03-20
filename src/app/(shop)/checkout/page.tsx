@@ -62,6 +62,7 @@ export default function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState('');
   const [addressLoaded, setAddressLoaded] = useState(false);
   const [gifts, setGifts] = useState<GiftItem[]>([]);
+  const [selectedGiftId, setSelectedGiftId] = useState<number | null>(null);
 
   const customerType = (session?.user as { customerType?: string } | undefined)?.customerType || 'privato';
 
@@ -153,6 +154,8 @@ export default function CheckoutPage() {
   const total = subtotal + vatTotal + shippingCost;
   const urgentItems = items.filter(i => i.isUrgent);
 
+  const selectedGift = gifts.find(g => g.ruleId === selectedGiftId) || null;
+
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
 
@@ -178,6 +181,7 @@ export default function CheckoutPage() {
             altShippingProvince: altAddress.province,
           } : {}),
           notes: orderNotes || undefined,
+          selectedGiftRuleId: selectedGiftId || undefined,
         }),
       });
       const data = await res.json();
@@ -308,37 +312,63 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {/* Omaggi applicabili */}
+          {/* Omaggi selezionabili */}
           {gifts.length > 0 && (
             <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-1">
                 <Gift size={20} className="text-green-600" />
                 <h3 className="font-bold text-green-800">
-                  {gifts.length === 1 ? 'Omaggio incluso nel tuo ordine!' : `${gifts.length} omaggi inclusi nel tuo ordine!`}
+                  Scegli il tuo omaggio!
                 </h3>
               </div>
+              <p className="text-xs text-green-600 mb-3">
+                Hai raggiunto la spesa minima. Seleziona uno degli omaggi disponibili:
+              </p>
               <div className="space-y-2">
-                {gifts.map((gift) => (
-                  <div key={gift.ruleId} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-green-100">
-                    <div className="w-12 h-12 bg-green-50 rounded-lg flex-shrink-0 flex items-center justify-center">
-                      {gift.giftProductImage ? (
-                        <img src={gift.giftProductImage} alt="" className="w-full h-full object-contain p-1" />
-                      ) : (
-                        <Gift size={20} className="text-green-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{gift.giftProductName}</p>
-                      <p className="text-xs text-green-600">
-                        {gift.giftQty} pz in omaggio
-                        {gift.triggerType === 'amount' && gift.triggerValue && (
-                          <span> &middot; Ordine da {formatCurrency(parseFloat(gift.triggerValue))}</span>
+                {gifts.map((gift) => {
+                  const isSelected = selectedGiftId === gift.ruleId;
+                  return (
+                    <button
+                      key={gift.ruleId}
+                      type="button"
+                      onClick={() => setSelectedGiftId(isSelected ? null : gift.ruleId)}
+                      className={`w-full flex items-center gap-3 rounded-lg p-3 border-2 transition-all text-left ${
+                        isSelected
+                          ? 'border-green-500 bg-green-100 shadow-sm'
+                          : 'border-green-100 bg-white hover:border-green-300 hover:bg-green-50/50'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        isSelected ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                         )}
-                      </p>
-                    </div>
-                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">GRATIS</span>
-                  </div>
-                ))}
+                      </div>
+                      <div className="w-12 h-12 bg-green-50 rounded-lg flex-shrink-0 flex items-center justify-center">
+                        {gift.giftProductImage ? (
+                          <img src={gift.giftProductImage} alt="" className="w-full h-full object-contain p-1" />
+                        ) : (
+                          <Gift size={20} className="text-green-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{gift.giftProductName}</p>
+                        <p className="text-xs text-green-600">
+                          {gift.giftQty} pz in omaggio
+                          {gift.triggerType === 'amount' && gift.triggerValue && (
+                            <span> &middot; Ordine da {formatCurrency(parseFloat(gift.triggerValue))}</span>
+                          )}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        isSelected ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'
+                      }`}>GRATIS</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -621,16 +651,14 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {gifts.length > 0 && (
+            {selectedGift && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="font-medium text-green-700 flex items-center gap-1 mb-1">
-                  <Gift size={14} /> Omaggi inclusi:
+                  <Gift size={14} /> Omaggio selezionato:
                 </p>
-                {gifts.map(gift => (
-                  <p key={gift.ruleId} className="text-xs text-green-600 ml-5">
-                    - {gift.giftProductName} ({gift.giftQty} pz) — GRATIS
-                  </p>
-                ))}
+                <p className="text-xs text-green-600 ml-5">
+                  - {selectedGift.giftProductName} ({selectedGift.giftQty} pz) — GRATIS
+                </p>
               </div>
             )}
 
