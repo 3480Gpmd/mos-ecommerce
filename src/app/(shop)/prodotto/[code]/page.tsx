@@ -168,12 +168,12 @@ export default function ProductPage() {
           {product.brand && (
             <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">{product.brand}</p>
           )}
-          <h1 className="font-heading text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
+          <h1 className="text-xl md:text-2xl font-semibold leading-tight mb-2">{product.name}</h1>
           <p className="text-sm text-gray-500 mb-4">Codice: {product.code}</p>
 
           {/* Price */}
           <div className="bg-gray-50 rounded-xl p-6 mb-6">
-            <p className="text-3xl font-bold text-navy mb-1">
+            <p className="text-2xl font-bold text-navy mb-1">
               {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(displayPrice)}
             </p>
             <p className="text-sm text-gray-500">{priceLabel}</p>
