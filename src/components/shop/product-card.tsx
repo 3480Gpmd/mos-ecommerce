@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail, CheckCircle, AlertTriangle, XCircle, Clock, Minus, Plus, Check, Info } from 'lucide-react';
+import { ShoppingCart, FolderOpen, PenTool, Printer, FileText, Monitor, Package, Coffee, Droplets, Zap, Palette, Gamepad2, Gift, BookOpen, Sofa, TreePine, Eye, Scissors, Calculator, Mail, CheckCircle, AlertTriangle, XCircle, Clock, Minus, Plus, Check, Info, Heart } from 'lucide-react';
 import type { Product } from '@/db/schema';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -76,6 +76,8 @@ export function ProductCard({ product }: { product: Product }) {
   const [added, setAdded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [showQtySelector, setShowQtySelector] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [togglingFav, setTogglingFav] = useState(false);
 
   const adjustQty = useCallback((newQty: number) => {
     const rounded = Math.max(minQty, Math.ceil(newQty / multiple) * multiple);
@@ -121,6 +123,33 @@ export function ProductCard({ product }: { product: Product }) {
     }
   };
 
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!session?.user) {
+      router.push('/login?redirect=/catalogo');
+      return;
+    }
+
+    setTogglingFav(true);
+    try {
+      const method = isFavorite ? 'DELETE' : 'POST';
+      const res = await fetch('/api/wishlist', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      if (res.ok) {
+        setIsFavorite(!isFavorite);
+      }
+    } catch {
+      // Handle error silently
+    } finally {
+      setTogglingFav(false);
+    }
+  };
+
   const { Icon, bg, color } = getPlaceholder(product);
 
   return (
@@ -128,6 +157,19 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/prodotto/${product.code}`} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200 relative">
         {/* Image */}
         <div className={`relative aspect-square ${product.imageUrl ? 'bg-gray-50' : bg} p-4`}>
+          {/* Favorite button */}
+          <button
+            onClick={handleFavoriteClick}
+            disabled={togglingFav}
+            className={`absolute top-2 right-2 z-20 p-1.5 rounded-full transition-all duration-200 ${
+              isFavorite
+                ? 'bg-red/10 text-red'
+                : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red hover:bg-red/10'
+            } ${togglingFav ? 'opacity-50' : ''}`}
+            title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+          >
+            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
@@ -151,7 +193,7 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
           {product.isExhausting && (
-            <span className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+            <span className="absolute bottom-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
               ULTIME SCORTE
             </span>
           )}
