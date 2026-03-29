@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { db } from '@/db';
+import { products } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 interface ProductLayoutProps {
   children: React.ReactNode;
@@ -8,16 +11,13 @@ interface ProductLayoutProps {
 
 async function getProductMetadata(code: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/products/${code}`, {
-      next: { revalidate: 3600 }, // revalidate every hour
-    } as any);
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.code, code), eq(products.isActive, true)))
+      .limit(1);
 
-    if (!res.ok) {
-      return null;
-    }
-
-    return await res.json();
+    return product || null;
   } catch (error) {
     console.error('Failed to fetch product metadata:', error);
     return null;
@@ -30,7 +30,7 @@ export async function generateMetadata(
   const { code } = await params;
   const product = await getProductMetadata(code);
 
-  if (!product || product.error) {
+  if (!product) {
     notFound();
   }
 
@@ -39,35 +39,6 @@ export async function generateMetadata(
   const priceNet = parseFloat(String(product.priceNet));
   const vatRate = parseFloat(String(product.vatCode));
   const displayPrice = priceNet * (1 + vatRate / 100);
-
-  const productSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    description: product.description || `${product.name} - ${product.brand || 'Milano Offre Servizi'}`,
-    image: product.imageUrl || `${siteUrl}/logo-light.png`,
-    brand: {
-      '@type': 'Brand',
-      name: product.brand || 'Milano Offre Servizi',
-    },
-    manufacturer: {
-      '@type': 'Organization',
-      name: product.brand || 'Milano Offre Servizi',
-    },
-    offers: {
-      '@type': 'Offer',
-      url: productUrl,
-      priceCurrency: 'EUR',
-      price: displayPrice.toFixed(2),
-      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      availability: (product.stockAvailable ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      seller: {
-        '@type': 'Organization',
-        name: 'Milano Offre Servizi',
-        url: siteUrl,
-      },
-    },
-  };
 
   return {
     title: `${product.name} | Milano Offre Servizi`,
@@ -99,7 +70,7 @@ export default async function ProductLayout({ children, params }: ProductLayoutP
   const { code } = await params;
   const product = await getProductMetadata(code);
 
-  if (!product || product.error) {
+  if (!product) {
     notFound();
   }
 
