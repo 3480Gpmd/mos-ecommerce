@@ -161,10 +161,10 @@ export function ProductCard({ product }: { product: Product }) {
           <button
             onClick={handleFavoriteClick}
             disabled={togglingFav}
-            className={`absolute top-2 right-2 z-20 p-1.5 rounded-full transition-all duration-200 ${
+            className={`absolute top-2 right-2 z-20 p-1.5 rounded-full shadow-sm transition-all duration-200 ${
               isFavorite
                 ? 'bg-red/10 text-red'
-                : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red hover:bg-red/10'
+                : 'bg-white/90 text-gray-400 hover:text-red hover:bg-red/10'
             } ${togglingFav ? 'opacity-50' : ''}`}
             title={isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
           >
