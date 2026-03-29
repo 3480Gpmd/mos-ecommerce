@@ -19,6 +19,7 @@ export default async function AdminDashboard() {
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
+  // Query principali (veloci)
   const [
     orderCount,
     customerCount,
@@ -26,11 +27,6 @@ export default async function AdminDashboard() {
     recentOrders,
     latestImport,
     revenue,
-    upcomingReminders,
-    newQuoteCount,
-    topCustomers,
-    inactiveCount,
-    abandonedCartCount,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(orders),
     db.select({ count: sql<number>`count(*)` }).from(customers),
@@ -38,45 +34,64 @@ export default async function AdminDashboard() {
     db.select().from(orders).orderBy(desc(orders.createdAt)).limit(5),
     db.select().from(csvImports).orderBy(desc(csvImports.importedAt)).limit(1),
     db.select({ total: sql<number>`COALESCE(SUM(total::numeric), 0)` }).from(orders).where(eq(orders.paymentStatus, 'paid')),
-    db.select({
-      id: customerNotes.id,
-      content: customerNotes.content,
-      reminderDate: customerNotes.reminderDate,
-      customerId: customerNotes.customerId,
-      customerName: sql<string>`COALESCE(${customers.companyName}, ${customers.firstName} || ' ' || ${customers.lastName})`,
-    })
-      .from(customerNotes)
-      .leftJoin(customers, eq(customerNotes.customerId, customers.id))
-      .where(and(eq(customerNotes.isCompleted, false), lte(customerNotes.reminderDate, sevenDaysFromNow)))
-      .orderBy(customerNotes.reminderDate)
-      .limit(5),
-    db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.status, 'nuovo')),
-    // Top 5 clienti per fatturato mese corrente
-    db.select({
-      customerName: orders.customerName,
-      customerEmail: orders.customerEmail,
-      totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)::text`,
-      orderCount: sql<number>`count(*)`,
-    })
-      .from(orders)
-      .where(gte(orders.createdAt, thisMonthStart))
-      .groupBy(orders.customerName, orders.customerEmail)
-      .orderBy(desc(sql`SUM(${orders.total}::numeric)`))
-      .limit(5),
-    // Clienti inattivi (60+ giorni)
-    db.execute(sql`
-      SELECT COUNT(DISTINCT sub.cid) as count FROM (
-        SELECT ${orders.customerId} as cid, MAX(${orders.createdAt}) as last_order
-        FROM ${orders}
-        GROUP BY ${orders.customerId}
-        HAVING MAX(${orders.createdAt}) < ${sixtyDaysAgo.toISOString()}::timestamp
-      ) sub
-    `),
-    // Carrelli abbandonati attivi (2+ ore)
-    db.select({ count: sql<number>`COUNT(DISTINCT ${cartItems.customerId})` })
-      .from(cartItems)
-      .where(lt(cartItems.updatedAt, new Date(Date.now() - 2 * 60 * 60 * 1000))),
   ]);
+
+  // Query secondarie (possono fallire senza bloccare la dashboard)
+  let upcomingReminders: { id: number; content: string | null; reminderDate: Date | null; customerId: number; customerName: string }[] = [];
+  let newQuoteCount: { count: number }[] = [{ count: 0 }];
+  let topCustomers: { customerName: string | null; customerEmail: string; totalSpent: string; orderCount: number }[] = [];
+  let inactiveCountValue = 0;
+  let abandonedCartCount: { count: number }[] = [{ count: 0 }];
+
+  try {
+    [upcomingReminders, newQuoteCount, topCustomers] = await Promise.all([
+      db.select({
+        id: customerNotes.id,
+        content: customerNotes.content,
+        reminderDate: customerNotes.reminderDate,
+        customerId: customerNotes.customerId,
+        customerName: sql<string>`COALESCE(${customers.companyName}, ${customers.firstName} || ' ' || ${customers.lastName})`,
+      })
+        .from(customerNotes)
+        .leftJoin(customers, eq(customerNotes.customerId, customers.id))
+        .where(and(eq(customerNotes.isCompleted, false), lte(customerNotes.reminderDate, sevenDaysFromNow)))
+        .orderBy(customerNotes.reminderDate)
+        .limit(5),
+      db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.status, 'nuovo')),
+      db.select({
+        customerName: orders.customerName,
+        customerEmail: orders.customerEmail,
+        totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)::text`,
+        orderCount: sql<number>`count(*)`,
+      })
+        .from(orders)
+        .where(gte(orders.createdAt, thisMonthStart))
+        .groupBy(orders.customerName, orders.customerEmail)
+        .orderBy(desc(sql`SUM(${orders.total}::numeric)`))
+        .limit(5),
+    ]);
+  } catch (e) {
+    console.error('Admin dashboard secondary queries failed:', e);
+  }
+
+  try {
+    const result = await db.execute(sql`
+      SELECT COUNT(DISTINCT "orders"."customer_id") as count
+      FROM "orders"
+      WHERE "orders"."created_at" < ${sixtyDaysAgo.toISOString()}::timestamp
+    `);
+    inactiveCountValue = Number((result as { rows?: { count: number }[] })?.rows?.[0]?.count || 0);
+  } catch (e) {
+    console.error('Inactive customers query failed:', e);
+  }
+
+  try {
+    abandonedCartCount = await db.select({ count: sql<number>`COUNT(DISTINCT ${cartItems.customerId})` })
+      .from(cartItems)
+      .where(lt(cartItems.updatedAt, new Date(Date.now() - 2 * 60 * 60 * 1000)));
+  } catch (e) {
+    console.error('Abandoned cart query failed:', e);
+  }
 
   const stats = [
     { label: 'Ordini', value: Number(orderCount[0]?.count || 0), icon: ShoppingCart, color: 'bg-blue' },
@@ -252,7 +267,7 @@ export default async function AdminDashboard() {
             <h3 className="font-heading font-bold text-navy text-sm">Clienti inattivi</h3>
           </div>
           <p className="text-3xl font-bold text-navy mb-1">
-            {Number((inactiveCount as { rows?: { count: number }[] })?.rows?.[0]?.count || 0)}
+            {inactiveCountValue}
           </p>
           <p className="text-xs text-gray-500">Non ordinano da 60+ giorni</p>
         </div>
