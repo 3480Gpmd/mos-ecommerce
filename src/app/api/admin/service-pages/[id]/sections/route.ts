@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const pageId = parseInt(params.id);
+    const { id: idStr } = await params;
+    const pageId = parseInt(idStr);
     const body = await req.json();
     const { type, title, subtitle, content, imageUrl, backgroundColor, sortOrder } = body;
 
@@ -48,10 +49,11 @@ export async function POST(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const pageId = parseInt(params.id);
+    const { id: idStr } = await params;
+    const pageId = parseInt(idStr);
     const body = await req.json();
 
     // Check if updating single section or multiple sections (reorder)
@@ -116,10 +118,11 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const pageId = parseInt(params.id);
+    const { id: idStr } = await params;
+    const pageId = parseInt(idStr);
     const body = await req.json();
     const { id: sectionId } = body;
 
@@ -146,10 +149,11 @@ export async function DELETE(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const pageId = parseInt(params.id);
+    const { id: idStr } = await params;
+    const pageId = parseInt(idStr);
     const body = await req.json();
     const { sections } = body;
 
