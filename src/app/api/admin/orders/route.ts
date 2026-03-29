@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { orders, orderItems, customers } from '@/db/schema';
+import { orders, orderItems, customers, supplierSettings, supplierOrders } from '@/db/schema';
 import { eq, desc, sql, ilike, or, and, gte, lte, count } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { sendSupplierOrderEmail } from '@/lib/supplier-email';
 
 async function checkAdmin() {
   const session = await auth();
@@ -192,10 +193,23 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, status, adminNotes, paymentStatus } = body;
+    const { id, status, adminNotes, paymentStatus, deliveryType, supplierId } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID ordine obbligatorio' }, { status: 400 });
+    }
+
+    const orderId = parseInt(id);
+
+    // Verify order exists
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!order) {
+      return NextResponse.json({ error: 'Ordine non trovato' }, { status: 404 });
     }
 
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -220,17 +234,134 @@ export async function PUT(req: NextRequest) {
       updateData.paymentStatus = paymentStatus;
     }
 
+    // Handle delivery type and supplier forwarding
+    let supplierOrderCreated = null;
+    if (deliveryType !== undefined) {
+      const validDeliveryTypes = ['drop_ship', 'sede_mos'];
+      if (!validDeliveryTypes.includes(deliveryType)) {
+        return NextResponse.json({ error: 'Tipo consegna non valido' }, { status: 400 });
+      }
+      updateData.deliveryType = deliveryType;
+
+      // If delivery type is set and supplier ID is provided, create supplier order
+      if (supplierId) {
+        // Verify supplier exists
+        const [supplier] = await db
+          .select()
+          .from(supplierSettings)
+          .where(eq(supplierSettings.id, supplierId))
+          .limit(1);
+
+        if (!supplier) {
+          return NextResponse.json({ error: 'Fornitore non trovato' }, { status: 404 });
+        }
+
+        // Check if supplier order already exists
+        const [existingSupplierOrder] = await db
+          .select()
+          .from(supplierOrders)
+          .where(eq(supplierOrders.orderId, orderId))
+          .limit(1);
+
+        if (!existingSupplierOrder) {
+          // Get order items
+          const items = await db
+            .select()
+            .from(orderItems)
+            .where(eq(orderItems.orderId, orderId));
+
+          if (items.length > 0) {
+            // Get customer for delivery address
+            const [customer] = await db
+              .select()
+              .from(customers)
+              .where(eq(customers.id, order.customerId))
+              .limit(1);
+
+            // Create supplier order
+            const [newSupplierOrder] = await db
+              .insert(supplierOrders)
+              .values({
+                orderId: orderId,
+                supplierId: supplierId,
+                deliveryType: deliveryType,
+                dropShipName: deliveryType === 'drop_ship' ? order.customerName : null,
+                dropShipAddress: deliveryType === 'drop_ship' ? order.shippingAddress : null,
+                dropShipPostcode: deliveryType === 'drop_ship' ? order.shippingPostcode : null,
+                dropShipCity: deliveryType === 'drop_ship' ? order.shippingCity : null,
+                dropShipProvince: deliveryType === 'drop_ship' ? order.shippingProvince : null,
+                supplierEmail: supplier.email,
+                emailStatus: 'pending',
+              })
+              .returning();
+
+            // Prepare items for email
+            const emailItems = items.map((item) => ({
+              code: item.productCode || '',
+              name: item.productName || '',
+              brand: item.productBrand || '',
+              qty: item.qty,
+              unit: item.unit || 'PZ',
+              priceNet: String(item.priceUnit),
+              vatPct: String(item.vatPct),
+            }));
+
+            // Send email to supplier
+            const emailResult = await sendSupplierOrderEmail({
+              supplierId: supplierId,
+              supplierEmail: supplier.email,
+              supplierName: supplier.name,
+              orderNumber: order.orderNumber,
+              customerName: order.customerName || customer?.companyName || `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim() || 'Cliente',
+              customerEmail: order.customerEmail || customer?.email || '',
+              items: emailItems,
+              deliveryType: deliveryType,
+              deliveryAddress: order.shippingAddress || undefined,
+              deliveryPostcode: order.shippingPostcode || undefined,
+              deliveryCity: order.shippingCity || undefined,
+              deliveryProvince: order.shippingProvince || undefined,
+              notes: order.notes,
+            });
+
+            if (emailResult.success) {
+              await db
+                .update(supplierOrders)
+                .set({
+                  emailStatus: 'sent',
+                  emailSentAt: new Date(),
+                })
+                .where(eq(supplierOrders.id, newSupplierOrder.id));
+
+              updateData.supplierForwarded = true;
+              updateData.supplierForwardedAt = new Date();
+              supplierOrderCreated = { ...newSupplierOrder, emailStatus: 'sent' };
+
+              console.log(`📧 Supplier order email sent for order ${order.orderNumber} to ${supplier.email}`);
+            } else {
+              await db
+                .update(supplierOrders)
+                .set({ emailStatus: 'failed' })
+                .where(eq(supplierOrders.id, newSupplierOrder.id));
+
+              supplierOrderCreated = { ...newSupplierOrder, emailStatus: 'failed' };
+              console.error(`🔴 Failed to send supplier order email for order ${order.orderNumber}`);
+            }
+          }
+        }
+      }
+    }
+
     const [updated] = await db
       .update(orders)
       .set(updateData)
-      .where(eq(orders.id, parseInt(id)))
+      .where(eq(orders.id, orderId))
       .returning();
 
     if (!updated) {
       return NextResponse.json({ error: 'Ordine non trovato' }, { status: 404 });
     }
 
-    return NextResponse.json({ order: updated });
+    return NextResponse.json({ order: updated, supplierOrder: supplierOrderCreated });
   } catch (error) {
     console.error('PUT /api/admin/orders error:', error);
     return NextResponse.json({ error: 'Errore nell\'aggiornamento' }, { status: 500 });

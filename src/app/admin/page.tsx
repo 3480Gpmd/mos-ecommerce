@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Package, Users, ShoppingCart, TrendingUp, Tag, FolderTree,
   Upload, FileText, Settings, Search, BarChart3, Bell, ClipboardList,
-  AlertTriangle, UserMinus, Crown, ShoppingBag,
+  AlertTriangle, UserMinus, Crown, ShoppingBag, Megaphone, Globe,
 } from 'lucide-react';
 import { cartItems } from '@/db/schema';
 
@@ -154,6 +154,22 @@ export default async function AdminDashboard() {
       description: `Gestire le richieste di preventivo dal sito.${Number(newQuoteCount[0]?.count || 0) > 0 ? ` (${newQuoteCount[0].count} nuov${Number(newQuoteCount[0].count) === 1 ? 'a' : 'e'})` : ''}`,
       color: 'text-pink-600',
       bg: 'bg-pink-50',
+    },
+    {
+      href: '/admin/servizi',
+      icon: Megaphone,
+      title: 'Pagine Servizi',
+      description: 'Gestire le pagine di servizio e contenuti CMS con sezioni.',
+      color: 'text-cyan-600',
+      bg: 'bg-cyan-50',
+    },
+    {
+      href: '/admin/seo',
+      icon: Globe,
+      title: 'SEO & Metadata',
+      description: 'Configurare SEO, metadata globali, schema.org e redirect 301.',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
     },
     {
       href: '/admin/impostazioni',

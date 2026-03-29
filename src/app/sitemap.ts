@@ -1,4 +1,7 @@
 import type { MetadataRoute } from 'next';
+import { db } from '@/db';
+import { servicePages } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 async function getActiveProducts() {
   try {
@@ -16,6 +19,19 @@ async function getActiveProducts() {
     return data.products || [];
   } catch (error) {
     console.error('Error fetching products for sitemap:', error);
+    return [];
+  }
+}
+
+async function getActiveServicePages() {
+  try {
+    const pages = await db
+      .select()
+      .from(servicePages)
+      .where(eq(servicePages.isActive, true));
+    return pages || [];
+  } catch (error) {
+    console.error('Error fetching service pages for sitemap:', error);
     return [];
   }
 }
@@ -82,39 +98,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Service pages
-  const servicePages: MetadataRoute.Sitemap = [
-    {
-      url: `${baseUrl}/servizi/caffe-borbone`,
-      lastModified: today,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/servizi/lavazza-firma`,
-      lastModified: today,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/servizi/bevande-gise`,
-      lastModified: today,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/servizi/dispenser-boccioni`,
-      lastModified: today,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/servizi/macchine-caffe-comodato`,
-      lastModified: today,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-  ];
+  // Service pages - fetched from database
+  const servicePageRecords = await getActiveServicePages();
+  const servicePagesEntry: MetadataRoute.Sitemap = servicePageRecords.map((page: any) => ({
+    url: `${baseUrl}/servizi/${page.slug}`,
+    lastModified: page.updatedAt ? new Date(page.updatedAt).toISOString().split('T')[0] : today,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
 
   // Product pages
   const products = await getActiveProducts();
@@ -125,5 +116,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...servicePages, ...productPages];
+  return [...staticPages, ...servicePagesEntry, ...productPages];
 }

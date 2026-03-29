@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, UserPlus, LayoutGrid, Coffee, GlassWater, Wrench } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, UserPlus, LayoutGrid, Coffee, GlassWater, Wrench, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -26,6 +26,7 @@ export function Header() {
   const [caffeOpen, setCaffeOpen] = useState(false);
   const [freddeOpen, setFreddeOpen] = useState(false);
   const [serviziOpen, setServiziOpen] = useState(false);
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groups, setGroups] = useState<Group[]>([]);
   const [cartCount, setCartCount] = useState(0);
@@ -33,6 +34,7 @@ export function Header() {
   const caffeTimeout = useRef<NodeJS.Timeout | null>(null);
   const freddeTimeout = useRef<NodeJS.Timeout | null>(null);
   const serviziTimeout = useRef<NodeJS.Timeout | null>(null);
+  const accountDropdownRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,6 +43,20 @@ export function Header() {
       .then((data) => setGroups(data.groups || []))
       .catch(() => {});
   }, []);
+
+  // Close account dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setAccountDropdownOpen(false);
+      }
+    };
+
+    if (accountDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [accountDropdownOpen]);
 
   // Fetch cart count
   useEffect(() => {
@@ -161,10 +177,66 @@ export function Header() {
                     </span>
                   )}
                 </Link>
-                <Link href="/profilo" className="hidden sm:flex items-center gap-1 text-sm hover:text-blue-light transition-colors">
-                  <User size={20} />
-                  <span className="hidden lg:inline">{session.user.name || 'Account'}</span>
-                </Link>
+                {/* Account Dropdown */}
+                <div className="relative hidden sm:block" ref={accountDropdownRef}>
+                  <button
+                    onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                    className="flex items-center gap-1 text-sm hover:text-blue-light transition-colors"
+                  >
+                    <User size={20} />
+                    <span className="hidden lg:inline">{session.user.name || 'Account'}</span>
+                    <ChevronDown size={16} className={`hidden lg:inline transition-transform ${accountDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {accountDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-1 z-50 bg-white shadow-xl rounded-lg border border-gray-200 w-56 py-1 animate-in fade-in-0 zoom-in-95 duration-200">
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider">Account</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{session.user.name || session.user.email}</p>
+                      </div>
+
+                      {/* Menu Items */}
+                      <Link
+                        href="/ordini"
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setAccountDropdownOpen(false)}
+                      >
+                        I miei ordini
+                      </Link>
+                      <Link
+                        href="/preferiti"
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setAccountDropdownOpen(false)}
+                      >
+                        Preferiti
+                      </Link>
+                      <Link
+                        href="/profilo"
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setAccountDropdownOpen(false)}
+                      >
+                        Il mio profilo
+                      </Link>
+
+                      {/* Separator */}
+                      <div className="my-1 border-t border-gray-100"></div>
+
+                      {/* Logout Button */}
+                      <button
+                        onClick={() => {
+                          setAccountDropdownOpen(false);
+                          signOut({ callbackUrl: '/' });
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 font-medium"
+                      >
+                        <LogOut size={16} />
+                        Esci
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className="flex items-center gap-2">

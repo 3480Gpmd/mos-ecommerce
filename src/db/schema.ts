@@ -97,6 +97,15 @@ export const products = pgTable('products', {
   promoEndDate: timestamp('promo_end_date'),
   newUntilDate: timestamp('new_until_date'),
 
+  // Variant and alternative codes
+  alternativeCode1: varchar('alternative_code_1', { length: 100 }),
+  alternativeCode2: varchar('alternative_code_2', { length: 100 }),
+  replacementCode: varchar('replacement_code', { length: 100 }),
+  weight: decimal('weight', { precision: 10, scale: 3 }),
+  packageQty: integer('package_qty'),
+  boxQty: integer('box_qty'),
+  palletQty: integer('pallet_qty'),
+
   imageUrl: text('image_url'),
   imageCustom: text('image_custom'),
 
@@ -198,6 +207,11 @@ export const orders = pgTable('orders', {
   altShippingCity: varchar('alt_shipping_city', { length: 100 }),
   altShippingProvince: varchar('alt_shipping_province', { length: 5 }),
   altShippingName: varchar('alt_shipping_name', { length: 255 }),
+
+  // Supplier forwarding
+  deliveryType: varchar('delivery_type', { length: 20 }), // 'drop_ship' | 'sede_mos'
+  supplierForwarded: boolean('supplier_forwarded').default(false).notNull(),
+  supplierForwardedAt: timestamp('supplier_forwarded_at'),
 
   // Note
   notes: text('notes'),
@@ -796,6 +810,129 @@ export const campaignProductsRelations = relations(campaignProducts, ({ one }) =
   product: one(products, { fields: [campaignProducts.productId], references: [products.id] }),
 }));
 
+// ─── Supplier Management ─────────────────────────────────────────────
+
+export const supplierSettings = pgTable('supplier_settings', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 30 }),
+  notes: text('notes'),
+  isDefault: boolean('is_default').default(false).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const supplierOrders = pgTable('supplier_orders', {
+  id: serial('id').primaryKey(),
+  orderId: integer('order_id').references(() => orders.id, { onDelete: 'cascade' }).notNull(),
+  supplierId: integer('supplier_id').references(() => supplierSettings.id),
+  deliveryType: varchar('delivery_type', { length: 20 }).notNull(), // 'drop_ship' | 'sede_mos'
+  dropShipAddress: text('drop_ship_address'),
+  dropShipCity: varchar('drop_ship_city', { length: 100 }),
+  dropShipPostcode: varchar('drop_ship_postcode', { length: 10 }),
+  dropShipProvince: varchar('drop_ship_province', { length: 5 }),
+  dropShipName: varchar('drop_ship_name', { length: 255 }),
+  mosAddress: text('mos_address').default('MOS MilanoOffreServizi di Davide Mareggini, Via Romolo Bitti 28, 20125 Milano'),
+  supplierEmail: varchar('supplier_email', { length: 255 }),
+  emailSentAt: timestamp('email_sent_at'),
+  emailStatus: varchar('email_status', { length: 20 }).default('pending'), // 'pending' | 'sent' | 'failed'
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('supplier_orders_order_idx').on(table.orderId),
+  index('supplier_orders_supplier_idx').on(table.supplierId),
+  index('supplier_orders_status_idx').on(table.emailStatus),
+]);
+
+// ─── Product Variants ────────────────────────────────────────────────
+
+export const productVariantGroups = pgTable('product_variant_groups', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: varchar('type', { length: 30 }).notNull().default('color'), // 'color' | 'size' | 'model' | 'other'
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const productVariants = pgTable('product_variants', {
+  id: serial('id').primaryKey(),
+  groupId: integer('group_id').references(() => productVariantGroups.id, { onDelete: 'cascade' }).notNull(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  variantLabel: varchar('variant_label', { length: 100 }).notNull(), // e.g. "Rosso", "Blu", "XL"
+  colorHex: varchar('color_hex', { length: 7 }), // #FF0000 for color swatches
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('product_variants_group_idx').on(table.groupId),
+  index('product_variants_product_idx').on(table.productId),
+  uniqueIndex('product_variants_unique_idx').on(table.groupId, table.productId),
+]);
+
+// ─── Service Pages CMS ───────────────────────────────────────────────
+
+export const servicePages = pgTable('service_pages', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  title: varchar('title', { length: 255 }).notNull(),
+  subtitle: text('subtitle'),
+  heroTitle: text('hero_title'),
+  heroSubtitle: text('hero_subtitle'),
+  heroImageUrl: text('hero_image_url'),
+  metaTitle: varchar('meta_title', { length: 255 }),
+  metaDescription: text('meta_description'),
+  category: varchar('category', { length: 50 }).notNull(), // 'caffe' | 'acqua' | 'ufficio'
+  sortOrder: integer('sort_order').default(0),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('service_pages_slug_idx').on(table.slug),
+  index('service_pages_category_idx').on(table.category),
+]);
+
+export const servicePageSections = pgTable('service_page_sections', {
+  id: serial('id').primaryKey(),
+  pageId: integer('page_id').references(() => servicePages.id, { onDelete: 'cascade' }).notNull(),
+  type: varchar('type', { length: 30 }).notNull(), // 'hero' | 'text' | 'features' | 'pricing' | 'gallery' | 'cta' | 'faq' | 'testimonial' | 'process'
+  title: varchar('title', { length: 255 }),
+  subtitle: text('subtitle'),
+  content: text('content'), // JSON string for complex content
+  imageUrl: text('image_url'),
+  backgroundColor: varchar('background_color', { length: 20 }),
+  sortOrder: integer('sort_order').default(0),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('service_page_sections_page_idx').on(table.pageId),
+]);
+
+// ─── Relations for New Tables ───────────────────────────────────────
+
+export const supplierOrdersRelations = relations(supplierOrders, ({ one }) => ({
+  order: one(orders, { fields: [supplierOrders.orderId], references: [orders.id] }),
+  supplier: one(supplierSettings, { fields: [supplierOrders.supplierId], references: [supplierSettings.id] }),
+}));
+
+export const productVariantGroupsRelations = relations(productVariantGroups, ({ many }) => ({
+  variants: many(productVariants),
+}));
+
+export const productVariantsRelations = relations(productVariants, ({ one }) => ({
+  group: one(productVariantGroups, { fields: [productVariants.groupId], references: [productVariantGroups.id] }),
+  product: one(products, { fields: [productVariants.productId], references: [products.id] }),
+}));
+
+export const servicePagesRelations = relations(servicePages, ({ many }) => ({
+  sections: many(servicePageSections),
+}));
+
+export const servicePageSectionsRelations = relations(servicePageSections, ({ one }) => ({
+  page: one(servicePages, { fields: [servicePageSections.pageId], references: [servicePages.id] }),
+}));
+
 // ─── Types ─────────────────────────────────────────────────────────
 
 export type Product = typeof products.$inferSelect;
@@ -824,3 +961,9 @@ export type Catalog = typeof catalogs.$inferSelect;
 export type ProductRelation = typeof productRelations.$inferSelect;
 export type Campaign = typeof campaigns.$inferSelect;
 export type CampaignProduct = typeof campaignProducts.$inferSelect;
+export type SupplierSetting = typeof supplierSettings.$inferSelect;
+export type SupplierOrder = typeof supplierOrders.$inferSelect;
+export type ProductVariantGroup = typeof productVariantGroups.$inferSelect;
+export type ProductVariant = typeof productVariants.$inferSelect;
+export type ServicePage = typeof servicePages.$inferSelect;
+export type ServicePageSection = typeof servicePageSections.$inferSelect;

@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOS - Servizi Caffè & Bevande Calde | Corporate Modern</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1a56db;
+            --primary-dark: #1240a8;
+            --primary-light: #e8effc;
+            --accent: #0ea5e9;
+            --dark: #111827;
+            --gray-900: #1f2937;
+            --gray-700: #374151;
+            --gray-500: #6b7280;
+            --gray-300: #d1d5db;
+            --gray-100: #f3f4f6;
+            --white: #ffffff;
+            --success: #10b981;
+            --gradient: linear-gradient(135deg, #1a56db 0%, #0ea5e9 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* NAVIGATION */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--gray-300);
+            padding: 0 2rem;
+            transition: all 0.3s ease;
+        }
+        .navbar-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .logo span { font-weight: 400; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-links a.active { color: var(--primary); }
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+        .nav-cta {
+            background: var(--gradient);
+            color: white !important;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,86,219,0.4); }
+
+        /* HERO SECTION */
+        .hero {
+            position: relative;
+            min-height: 92vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8faff 0%, #e8effc 50%, #dbeafe 100%);
+            padding-top: 72px;
+        }
+        .hero-bg-shapes {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .hero-bg-shapes .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.06;
+        }
+        .hero-bg-shapes .circle:nth-child(1) {
+            width: 600px; height: 600px;
+            background: var(--primary);
+            top: -100px; right: -100px;
+            animation: float 20s ease-in-out infinite;
+        }
+        .hero-bg-shapes .circle:nth-child(2) {
+            width: 400px; height: 400px;
+            background: var(--accent);
+            bottom: -50px; left: -50px;
+            animation: float 15s ease-in-out infinite reverse;
+        }
+        .hero-bg-shapes .circle:nth-child(3) {
+            width: 200px; height: 200px;
+            background: var(--primary);
+            top: 40%; left: 45%;
+            animation: float 12s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .hero-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(26,86,219,0.08);
+            border: 1px solid rgba(26,86,219,0.15);
+            border-radius: 50px;
+            padding: 0.4rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        .hero-badge .dot {
+            width: 8px; height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+        .hero h1 .highlight {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-text {
+            font-size: 1.15rem;
+            color: var(--gray-500);
+            line-height: 1.8;
+            margin-bottom: 2.5rem;
+            max-width: 520px;
+        }
+        .hero-actions { display: flex; gap: 1rem; }
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            padding: 0.9rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(26,86,219,0.35); }
+        .btn-outline {
+            background: white;
+            color: var(--dark);
+            padding: 0.9rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1.5px solid var(--gray-300);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
+
+        .hero-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+        }
+        .hero-card-img {
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(135deg, #8b5a2b 0%, #d4a574 50%, #6f4e37 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .coffee-icon {
+            font-size: 5rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+        .hero-card-img::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            text-align: center;
+        }
+        .hero-stat h4 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .hero-stat p {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .floating-badge {
+            position: absolute;
+            background: white;
+            border-radius: 14px;
+            padding: 0.8rem 1.2rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: floatBadge 6s ease-in-out infinite;
+        }
+        .floating-badge.top-right {
+            top: -20px; right: -30px;
+            animation-delay: 0s;
+        }
+        .floating-badge.bottom-left {
+            bottom: -15px; left: -30px;
+            animation-delay: 3s;
+        }
+        .floating-badge .icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .floating-badge .icon.green { background: #ecfdf5; }
+        .floating-badge .icon.blue { background: #eff6ff; }
+
+        @keyframes floatBadge {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* TRUSTED BY */
+        .trusted {
+            background: white;
+            padding: 3rem 2rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .trusted-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .trusted-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gray-500);
+            margin-bottom: 2rem;
+        }
+        .brand-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            opacity: 0.4;
+        }
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--gray-700);
+        }
+
+        /* SERVICES OVERVIEW */
+        .services-overview {
+            padding: 6rem 2rem;
+            background: var(--white);
+        }
+        .section-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .section-label::before {
+            content: '';
+            width: 24px;
+            height: 2px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--gray-500);
+            max-width: 600px;
+            line-height: 1.7;
+            margin-bottom: 4rem;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .service-card {
+            background: var(--gray-100);
+            border-radius: 20px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .service-card:hover {
+            background: white;
+            border-color: var(--gray-300);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        }
+        .service-icon {
+            width: 64px; height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s;
+        }
+        .service-card:hover .service-icon { transform: scale(1.1); }
+        .service-icon.coffee { background: linear-gradient(135deg, #fef3c7, #fcd34d); }
+        .service-icon.water { background: linear-gradient(135deg, #dbeafe, #60a5fa); }
+        .service-icon.office { background: linear-gradient(135deg, #d1fae5, #34d399); }
+
+        .service-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: var(--dark);
+        }
+        .service-card p {
+            font-size: 0.95rem;
+            color: var(--gray-500);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+        .service-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .service-tag {
+            background: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        .service-card:hover .service-tag {
+            background: var(--primary-light);
+            border-color: rgba(26,86,219,0.15);
+            color: var(--primary);
+        }
+        .service-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            margin-top: 1.5rem;
+            transition: gap 0.3s;
+        }
+        .service-link:hover { gap: 0.8rem; }
+
+        /* FEATURES SECTION */
+        .features {
+            padding: 6rem 2rem;
+            background: var(--dark);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gradient);
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        .feature-item {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s;
+        }
+        .feature-item:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-4px);
+        }
+        .feature-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .feature-item h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .feature-item p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.6;
+        }
+
+        /* SOLUTIONS */
+        .solutions {
+            padding: 6rem 2rem;
+            background: var(--gray-100);
+        }
+        .solution-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            margin-bottom: 5rem;
+        }
+        .solution-row:nth-child(even) { direction: rtl; }
+        .solution-row:nth-child(even) > * { direction: ltr; }
+        .solution-image {
+            width: 100%;
+            height: 380px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .solution-image-bg {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+        }
+        .solution-image-bg.coffee-bg { background: linear-gradient(135deg, #92400e 0%, #d97706 50%, #b45309 100%); }
+        .solution-image-bg.water-bg { background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 50%, #0369a1 100%); }
+        .solution-image-bg.office-bg { background: linear-gradient(135deg, #064e3b 0%, #059669 50%, #047857 100%); }
+
+        .solution-content h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+        .solution-content p {
+            font-size: 1.05rem;
+            color: var(--gray-500);
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+        .checklist {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+            color: var(--gray-700);
+        }
+        .checklist li::before {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* PRICING MODELS */
+        .pricing {
+            padding: 6rem 2rem;
+            background: white;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .pricing-card {
+            border: 1.5px solid var(--gray-300);
+            border-radius: 20px;
+            padding: 2.5rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .pricing-card:hover { border-color: var(--primary); box-shadow: 0 12px 40px rgba(26,86,219,0.1); }
+        .pricing-card.featured {
+            border-color: var(--primary);
+            background: linear-gradient(180deg, var(--primary-light) 0%, white 30%);
+        }
+        .pricing-card.featured::before {
+            content: 'PIÙ RICHIESTO';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .pricing-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .pricing-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .pricing-desc {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .pricing-features li:last-child { border-bottom: none; }
+        .pricing-features li .check { color: var(--success); font-weight: 700; }
+
+        /* TESTIMONIALS */
+        .testimonials {
+            padding: 6rem 2rem;
+            background: var(--gray-100);
+        }
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .testimonial-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--gray-300);
+        }
+        .testimonial-stars {
+            color: #fbbf24;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .testimonial-text {
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .testimonial-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .testimonial-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .testimonial-role {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        /* CTA SECTION */
+        .cta {
+            padding: 6rem 2rem;
+            background: var(--dark);
+            position: relative;
+            overflow: hidden;
+        }
+        .cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(26,86,219,0.15) 0%, transparent 60%),
+                        radial-gradient(circle at 70% 50%, rgba(14,165,233,0.1) 0%, transparent 60%);
+        }
+        .cta-content {
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .cta h2 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1rem;
+            letter-spacing: -1px;
+        }
+        .cta p {
+            font-size: 1.15rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+        .cta-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .btn-white {
+            background: white;
+            color: var(--dark);
+            padding: 0.9rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,255,255,0.2); }
+        .btn-ghost {
+            background: transparent;
+            color: white;
+            padding: 0.9rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .btn-ghost:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); }
+
+        /* FOOTER */
+        .footer {
+            background: var(--gray-900);
+            padding: 4rem 2rem 2rem;
+            color: rgba(255,255,255,0.5);
+        }
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+        .footer-brand .logo { margin-bottom: 1rem; }
+        .footer-brand p { font-size: 0.9rem; line-height: 1.7; }
+        .footer h5 {
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.2rem;
+        }
+        .footer ul { list-style: none; }
+        .footer ul li { margin-bottom: 0.6rem; }
+        .footer ul a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .footer ul a:hover { color: white; }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        /* SCROLL ANIMATIONS */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .hero-content { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.5rem; }
+            .services-grid { grid-template-columns: 1fr; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .solution-row { grid-template-columns: 1fr; }
+            .solution-row:nth-child(even) { direction: ltr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .testimonials-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="logo">MOS <span>Milano Offre Servizi</span></div>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Servizi</a></li>
+                <li><a href="#">Catalogo</a></li>
+                <li><a href="#">Chi Siamo</a></li>
+                <li><a href="#">Contatti</a></li>
+            </ul>
+            <a href="#" class="nav-cta">Richiedi Preventivo</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-bg-shapes">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+        </div>
+        <div class="hero-content">
+            <div>
+                <div class="hero-badge">
+                    <span class="dot"></span>
+                    Servizio attivo a Milano e Lombardia
+                </div>
+                <h1>Il partner ideale per il tuo <span class="highlight">ambiente di lavoro</span></h1>
+                <p class="hero-text">
+                    Caffè premium, acqua fresca e forniture complete per ufficio.
+                    Tutto in un unico fornitore con consegna rapida e assistenza dedicata nella zona di Milano.
+                </p>
+                <div class="hero-actions">
+                    <a href="#" class="btn-primary">Scopri i Servizi →</a>
+                    <a href="#" class="btn-outline">▶ Come Funziona</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-card">
+                    <div class="hero-card-img">
+                        <span class="coffee-icon">☕</span>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <h4>25k+</h4>
+                            <p>Prodotti</p>
+                        </div>
+                        <div class="hero-stat">
+                            <h4>500+</h4>
+                            <p>Clienti Attivi</p>
+                        </div>
+                        <div class="hero-stat">
+                            <h4>24h</h4>
+                            <p>Consegna</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="floating-badge top-right">
+                    <div class="icon green">🌱</div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--gray-500)">Eco-Friendly</div>
+                        <div>Cialde Compostabili</div>
+                    </div>
+                </div>
+                <div class="floating-badge bottom-left">
+                    <div class="icon blue">🔧</div>
+                    <div>
+                        <div style="font-size:0.75rem;color:var(--gray-500)">Incluso</div>
+                        <div>Assistenza Tecnica</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUSTED BY -->
+    <section class="trusted">
+        <div class="trusted-inner">
+            <p class="trusted-label">I brand che forniamo</p>
+            <div class="brand-logos">
+                <span class="brand-logo">BORBONE</span>
+                <span class="brand-logo">LAVAZZA</span>
+                <span class="brand-logo">ILLY</span>
+                <span class="brand-logo">NESPRESSO</span>
+                <span class="brand-logo">GISE</span>
+                <span class="brand-logo">SAN BENEDETTO</span>
+                <span class="brand-logo">STAEDTLER</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES OVERVIEW -->
+    <section class="services-overview">
+        <div class="section-inner">
+            <div class="section-label">I Nostri Servizi</div>
+            <h2 class="section-title">Tre soluzioni, un unico partner</h2>
+            <p class="section-subtitle">
+                Dall'espresso perfetto all'ultima risma di carta. Gestiamo tutto ciò che serve al tuo ufficio,
+                con formule flessibili pensate per ogni esigenza.
+            </p>
+            <div class="services-grid">
+                <div class="service-card animate-on-scroll">
+                    <div class="service-icon coffee">☕</div>
+                    <h3>Caffè & Bevande Calde</h3>
+                    <p>Macchine professionali in comodato d'uso, noleggio o vendita. Capsule, cialde e caffè in grani dei migliori brand italiani.</p>
+                    <div class="service-tags">
+                        <span class="service-tag">Borbone</span>
+                        <span class="service-tag">Lavazza</span>
+                        <span class="service-tag">Illy</span>
+                        <span class="service-tag">Comodato</span>
+                        <span class="service-tag">Noleggio</span>
+                    </div>
+                    <a href="#" class="service-link">Scopri di più →</a>
+                </div>
+                <div class="service-card animate-on-scroll">
+                    <div class="service-icon water">💧</div>
+                    <h3>Acqua & Bevande</h3>
+                    <p>Dispenser a boccioni o collegati alla rete idrica. Bibite in bottiglia e lattina delle migliori marche, anche personalizzate.</p>
+                    <div class="service-tags">
+                        <span class="service-tag">Boccioni</span>
+                        <span class="service-tag">Rete Idrica</span>
+                        <span class="service-tag">Bibite</span>
+                        <span class="service-tag">Custom Brand</span>
+                    </div>
+                    <a href="#" class="service-link">Scopri di più →</a>
+                </div>
+                <div class="service-card animate-on-scroll">
+                    <div class="service-icon office">📦</div>
+                    <h3>Prodotti per l'Ufficio</h3>
+                    <p>Oltre 25.000 referenze: toner, cancelleria, carta, igiene e molto altro. Ordini online con consegna in 24h su Milano.</p>
+                    <div class="service-tags">
+                        <span class="service-tag">Toner</span>
+                        <span class="service-tag">Cancelleria</span>
+                        <span class="service-tag">Carta</span>
+                        <span class="service-tag">25.000+ SKU</span>
+                    </div>
+                    <a href="#" class="service-link">Vai al Catalogo →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NUMBERS -->
+    <section class="features">
+        <div class="section-inner">
+            <div class="section-label" style="color:rgba(255,255,255,0.5)">Perché scegliere MOS</div>
+            <h2 class="section-title" style="color:white">I numeri parlano chiaro</h2>
+            <div class="features-grid">
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-number">25.000+</div>
+                    <h4>Prodotti a catalogo</h4>
+                    <p>La gamma più completa per ogni esigenza d'ufficio</p>
+                </div>
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-number">24h</div>
+                    <h4>Consegna garantita</h4>
+                    <p>Ordini entro le 17:00 consegnati il giorno dopo</p>
+                </div>
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-number">15+</div>
+                    <h4>Anni di esperienza</h4>
+                    <p>Partner affidabile per aziende milanesi dal 2009</p>
+                </div>
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-number">100%</div>
+                    <h4>Assistenza inclusa</h4>
+                    <p>Manutenzione e supporto tecnico sempre gratuiti</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOLUTION DETAILS -->
+    <section class="solutions">
+        <div class="section-inner">
+            <div class="section-label">Soluzioni nel Dettaglio</div>
+            <h2 class="section-title">Come funzionano i nostri servizi</h2>
+            <p class="section-subtitle" style="margin-bottom:4rem">
+                Ogni servizio è pensato per essere flessibile e personalizzabile in base alle tue necessità.
+            </p>
+
+            <div class="solution-row animate-on-scroll">
+                <div class="solution-image">
+                    <div class="solution-image-bg coffee-bg">☕</div>
+                </div>
+                <div class="solution-content">
+                    <h3>Caffè & Bevande Calde</h3>
+                    <p>Trasforma la pausa caffè in un momento di qualità. Offriamo macchine professionali dei migliori brand con tre formule contrattuali pensate per ogni tipo di azienda.</p>
+                    <ul class="checklist">
+                        <li>Macchine in comodato d'uso gratuito con fornitura minima</li>
+                        <li>Noleggio operativo con canone mensile tutto incluso</li>
+                        <li>Vendita diretta con assistenza tecnica garantita</li>
+                        <li>Capsule, cialde ESE compostabili e caffè in grani</li>
+                        <li>Manutenzione ordinaria e straordinaria inclusa</li>
+                    </ul>
+                    <a href="#" class="btn-primary">Configura il tuo servizio →</a>
+                </div>
+            </div>
+
+            <div class="solution-row animate-on-scroll">
+                <div class="solution-image">
+                    <div class="solution-image-bg water-bg">💧</div>
+                </div>
+                <div class="solution-content">
+                    <h3>Acqua & Bevande</h3>
+                    <p>Idratazione di qualità per tutto l'ufficio. Dai classici boccioni ai moderni dispenser collegati alla rete idrica, con acqua naturale, frizzante e a temperatura ambiente.</p>
+                    <ul class="checklist">
+                        <li>Dispenser a boccioni con consegna periodica programmata</li>
+                        <li>Dispenser a rete idrica con filtrazione avanzata</li>
+                        <li>Acqua naturale, frizzante e temperatura ambiente</li>
+                        <li>Bibite in bottiglia e lattina dei migliori brand</li>
+                        <li>Possibilità di marchio personalizzato su richiesta</li>
+                    </ul>
+                    <a href="#" class="btn-primary">Richiedi preventivo →</a>
+                </div>
+            </div>
+
+            <div class="solution-row animate-on-scroll">
+                <div class="solution-image">
+                    <div class="solution-image-bg office-bg">📦</div>
+                </div>
+                <div class="solution-content">
+                    <h3>Prodotti per l'Ufficio</h3>
+                    <p>Un catalogo sterminato con oltre 25.000 referenze per coprire ogni esigenza del tuo ambiente di lavoro. Ordina online e ricevi in 24 ore.</p>
+                    <ul class="checklist">
+                        <li>Toner e cartucce per ogni marca e modello di stampante</li>
+                        <li>Cancelleria professionale e materiale per ufficio</li>
+                        <li>Carta per stampa, copie e uso professionale</li>
+                        <li>Prodotti per igiene e pulizia ambienti</li>
+                        <li>Arredo ufficio e accessori ergonomici</li>
+                    </ul>
+                    <a href="#" class="btn-primary">Sfoglia il Catalogo →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING MODELS -->
+    <section class="pricing">
+        <div class="section-inner">
+            <div class="section-label">Formule Contrattuali</div>
+            <h2 class="section-title">Scegli la formula giusta per te</h2>
+            <p class="section-subtitle">Tre modelli contrattuali flessibili per adattarsi a ogni tipo di azienda.</p>
+            <div class="pricing-grid">
+                <div class="pricing-card animate-on-scroll">
+                    <div class="pricing-icon">🤝</div>
+                    <h3>Comodato d'Uso</h3>
+                    <p class="pricing-desc">Macchina in uso gratuito con impegno di acquisto minimo mensile di consumabili.</p>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Macchina gratuita</li>
+                        <li><span class="check">✓</span> Manutenzione inclusa</li>
+                        <li><span class="check">✓</span> Sostituzione in caso di guasto</li>
+                        <li><span class="check">✓</span> Fornitura minima mensile</li>
+                        <li><span class="check">✓</span> Installazione gratuita</li>
+                    </ul>
+                    <a href="#" class="btn-primary" style="width:100%;justify-content:center">Richiedi Info</a>
+                </div>
+                <div class="pricing-card featured animate-on-scroll">
+                    <div class="pricing-icon">📋</div>
+                    <h3>Noleggio Operativo</h3>
+                    <p class="pricing-desc">Canone mensile fisso tutto incluso. Zero pensieri, massima flessibilità.</p>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Canone mensile fisso</li>
+                        <li><span class="check">✓</span> Tutto incluso nel prezzo</li>
+                        <li><span class="check">✓</span> Deducibilità fiscale 100%</li>
+                        <li><span class="check">✓</span> Upgrade tecnologico</li>
+                        <li><span class="check">✓</span> Nessun vincolo lungo termine</li>
+                    </ul>
+                    <a href="#" class="btn-primary" style="width:100%;justify-content:center">Scegli Noleggio</a>
+                </div>
+                <div class="pricing-card animate-on-scroll">
+                    <div class="pricing-icon">🛒</div>
+                    <h3>Acquisto Diretto</h3>
+                    <p class="pricing-desc">Acquista la macchina e i consumabili al miglior prezzo. Assistenza tecnica garantita.</p>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Proprietà della macchina</li>
+                        <li><span class="check">✓</span> Prezzi competitivi</li>
+                        <li><span class="check">✓</span> Garanzia 24 mesi</li>
+                        <li><span class="check">✓</span> Assistenza a tariffe agevolate</li>
+                        <li><span class="check">✓</span> Libertà di scelta consumabili</li>
+                    </ul>
+                    <a href="#" class="btn-primary" style="width:100%;justify-content:center">Vai allo Shop</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials">
+        <div class="section-inner">
+            <div class="section-label">Recensioni</div>
+            <h2 class="section-title">Cosa dicono i nostri clienti</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card animate-on-scroll">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"Da quando abbiamo il servizio caffè MOS, i nostri dipendenti sono più soddisfatti. La qualità del caffè Borbone è eccellente e il servizio di assistenza impeccabile."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">MR</div>
+                        <div>
+                            <div class="testimonial-name">Marco Rossi</div>
+                            <div class="testimonial-role">Office Manager, Studio Legale Rossi</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card animate-on-scroll">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"Gestiamo tutto l'ufficio con MOS: caffè, acqua, toner e cancelleria. Un solo fornitore, una sola fattura, zero problemi. Consigliatissimi."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">LB</div>
+                        <div>
+                            <div class="testimonial-name">Laura Bianchi</div>
+                            <div class="testimonial-role">Responsabile Acquisti, TechCorp Srl</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card animate-on-scroll">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"Il dispenser a rete idrica ha rivoluzionato il nostro ufficio. Acqua sempre fresca, niente più bottiglie di plastica. Anche il risparmio è notevole."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">GV</div>
+                        <div>
+                            <div class="testimonial-name">Giuseppe Verdi</div>
+                            <div class="testimonial-role">CEO, DesignStudio Milano</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <div class="cta-content animate-on-scroll">
+            <h2>Pronto a migliorare il tuo ufficio?</h2>
+            <p>Richiedi un preventivo personalizzato e scopri come possiamo trasformare il tuo ambiente di lavoro. Nessun impegno, consulenza gratuita.</p>
+            <div class="cta-actions">
+                <a href="#" class="btn-white">Richiedi Preventivo Gratuito</a>
+                <a href="#" class="btn-ghost">📞 Chiama Ora</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">MOS <span>Milano Offre Servizi</span></div>
+                    <p style="margin-top:1rem">MOS MilanoOffreServizi di Davide Mareggini<br>Via Romolo Bitti, 28 - 20125 Milano<br>P.IVA: XXXXXXXX</p>
+                </div>
+                <div>
+                    <h5>Servizi</h5>
+                    <ul>
+                        <li><a href="#">Caffè & Bevande Calde</a></li>
+                        <li><a href="#">Acqua & Bevande</a></li>
+                        <li><a href="#">Prodotti Ufficio</a></li>
+                        <li><a href="#">Catalogo Online</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>Azienda</h5>
+                    <ul>
+                        <li><a href="#">Chi Siamo</a></li>
+                        <li><a href="#">Contatti</a></li>
+                        <li><a href="#">Lavora con Noi</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>Legale</h5>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                        <li><a href="#">Condizioni di Vendita</a></li>
+                        <li><a href="#">GDPR</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 MOS Milano Offre Servizi. Tutti i diritti riservati.</span>
+                <span>Realizzato con ❤️ a Milano</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll animation observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
+            } else {
+                navbar.style.boxShadow = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

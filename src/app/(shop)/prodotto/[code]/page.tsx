@@ -8,9 +8,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/db/schema';
 import type { Metadata } from 'next';
+import { ProductVariants } from '@/components/shop/product-variants';
+import { AlternativeProducts } from '@/components/shop/alternative-products';
 
 // generateMetadata is exported from a separate server component below
 // This is the client component for the page content
+
+interface VariantsData {
+  colorVariants: Array<{
+    id: number;
+    code: string;
+    name: string;
+    imageUrl?: string;
+    colorHex?: string;
+    variantLabel?: string;
+  }>;
+  alternatives: Product[];
+}
 
 export default function ProductPage() {
   const { code } = useParams<{ code: string }>();
@@ -19,6 +33,8 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [variantsData, setVariantsData] = useState<VariantsData | null>(null);
+  const [variantsLoading, setVariantsLoading] = useState(true);
 
   const customerType = (session?.user as { customerType?: string } | undefined)?.customerType || 'privato';
 
@@ -34,6 +50,18 @@ export default function ProductPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, [code]);
+
+  useEffect(() => {
+    fetch(`/api/products/${code}/variants`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error) {
+          setVariantsData(data);
+        }
+        setVariantsLoading(false);
+      })
+      .catch(() => setVariantsLoading(false));
   }, [code]);
 
   const minQty = product?.minOrderQty ?? 1;
@@ -102,26 +130,36 @@ export default function ProductPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Image */}
-        <div className="relative aspect-square bg-gray-50 rounded-xl p-8">
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-contain p-4"
-              unoptimized={!product.imageUrl.includes('identiprint.it') && !product.imageUrl.startsWith('/')}
+        {/* Image and Variants */}
+        <div>
+          <div className="relative aspect-square bg-gray-50 rounded-xl p-8 mb-6">
+            {product.imageUrl ? (
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain p-4"
+                unoptimized={!product.imageUrl.includes('identiprint.it') && !product.imageUrl.startsWith('/')}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <ShoppingCart size={96} />
+              </div>
+            )}
+            {product.isPromo && (
+              <span className="absolute top-4 left-4 bg-red text-white text-sm font-bold px-3 py-1 rounded">
+                PROMO
+              </span>
+            )}
+          </div>
+
+          {/* Product Variants */}
+          {!variantsLoading && variantsData?.colorVariants && variantsData.colorVariants.length > 0 && (
+            <ProductVariants
+              variants={variantsData.colorVariants}
+              currentProductCode={product.code}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <ShoppingCart size={96} />
-            </div>
-          )}
-          {product.isPromo && (
-            <span className="absolute top-4 left-4 bg-red text-white text-sm font-bold px-3 py-1 rounded">
-              PROMO
-            </span>
           )}
         </div>
 
@@ -279,6 +317,11 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* Alternative Products */}
+      {!variantsLoading && variantsData?.alternatives && variantsData.alternatives.length > 0 && (
+        <AlternativeProducts products={variantsData.alternatives} />
+      )}
     </div>
   );
 }
