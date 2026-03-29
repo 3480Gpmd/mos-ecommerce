@@ -129,26 +129,26 @@ export default function ProductPage() {
         <span className="text-gray-900">{product.name}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-[320px_1fr] lg:grid-cols-[380px_1fr] gap-8 items-start">
         {/* Image and Variants */}
         <div>
-          <div className="relative aspect-square bg-gray-50 rounded-xl p-8 mb-6">
+          <div className="relative aspect-[4/3] max-w-[380px] bg-gray-50 rounded-xl p-4 mb-4">
             {product.imageUrl ? (
               <Image
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain p-4"
+                sizes="(max-width: 768px) 280px, 380px"
+                className="object-contain p-3"
                 unoptimized={!product.imageUrl.includes('identiprint.it') && !product.imageUrl.startsWith('/')}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <ShoppingCart size={96} />
+                <ShoppingCart size={64} />
               </div>
             )}
             {product.isPromo && (
-              <span className="absolute top-4 left-4 bg-red text-white text-sm font-bold px-3 py-1 rounded">
+              <span className="absolute top-3 left-3 bg-red text-white text-xs font-bold px-2 py-1 rounded">
                 PROMO
               </span>
             )}

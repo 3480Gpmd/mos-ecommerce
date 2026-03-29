@@ -162,9 +162,10 @@ export function ProductCard({ product }: { product: Product }) {
           {product.brand && (
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{product.brand}</p>
           )}
-          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[2.5rem] mb-2">
+          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[2.5rem] mb-1">
             {product.name}
           </h3>
+          <p className="text-xs text-gray-400 mb-2">Cod. {product.code}</p>
           {/* Disponibilità */}
           <div className="flex items-center gap-1 mb-2">
             {(product.stockAvailable ?? 0) > 5 ? (
