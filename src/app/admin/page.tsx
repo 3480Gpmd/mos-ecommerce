@@ -1,105 +1,91 @@
 import { db } from '@/db';
-import { orders, customers, products, csvImports, customerNotes, quoteRequests } from '@/db/schema';
-import { eq, sql, desc, and, lte, gte, lt } from 'drizzle-orm';
+import { orders, customers, products, csvImports, quoteRequests } from '@/db/schema';
+import { eq, sql, desc, gte, lt } from 'drizzle-orm';
 import Link from 'next/link';
 import {
   Package, Users, ShoppingCart, TrendingUp, Tag, FolderTree,
-  Upload, FileText, Settings, Search, BarChart3, Bell, ClipboardList,
-  AlertTriangle, UserMinus, Crown, ShoppingBag, Megaphone, Globe,
+  Upload, FileText, Settings, ClipboardList,
+  UserMinus, Crown, ShoppingBag, Megaphone, Globe,
 } from 'lucide-react';
 import { cartItems } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const sevenDaysFromNow = new Date();
-  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-  const now = new Date();
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-  // Query principali (veloci)
-  const [
-    orderCount,
-    customerCount,
-    productCount,
-    recentOrders,
-    latestImport,
-    revenue,
-  ] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(orders),
-    db.select({ count: sql<number>`count(*)` }).from(customers),
-    db.select({ count: sql<number>`count(*)` }).from(products).where(eq(products.isActive, true)),
-    db.select().from(orders).orderBy(desc(orders.createdAt)).limit(5),
-    db.select().from(csvImports).orderBy(desc(csvImports.importedAt)).limit(1),
-    db.select({ total: sql<number>`COALESCE(SUM(total::numeric), 0)` }).from(orders).where(eq(orders.paymentStatus, 'paid')),
-  ]);
-
-  // Query secondarie (possono fallire senza bloccare la dashboard)
-  let upcomingReminders: { id: number; content: string | null; reminderDate: Date | null; customerId: number; customerName: string }[] = [];
-  let newQuoteCount: { count: number }[] = [{ count: 0 }];
+  // Valori di default per tutte le statistiche
+  let orderCountVal = 0;
+  let customerCountVal = 0;
+  let productCountVal = 0;
+  let recentOrders: typeof orders.$inferSelect[] = [];
+  let latestImport: typeof csvImports.$inferSelect[] = [];
+  let revenueVal = 0;
+  let newQuoteCountVal = 0;
   let topCustomers: { customerName: string | null; customerEmail: string; totalSpent: string; orderCount: number }[] = [];
   let inactiveCountValue = 0;
-  let abandonedCartCount: { count: number }[] = [{ count: 0 }];
+  let abandonedCartCountVal = 0;
+
+  // Tutte le query in try/catch individuali per massima resilienza
+  try {
+    const r = await db.select({ count: sql<number>`count(*)` }).from(orders);
+    orderCountVal = Number(r[0]?.count || 0);
+  } catch (e) { console.error('orderCount failed:', e); }
 
   try {
-    [upcomingReminders, newQuoteCount, topCustomers] = await Promise.all([
-      db.select({
-        id: customerNotes.id,
-        content: customerNotes.content,
-        reminderDate: customerNotes.reminderDate,
-        customerId: customerNotes.customerId,
-        customerName: sql<string>`COALESCE(${customers.companyName}, ${customers.firstName} || ' ' || ${customers.lastName})`,
-      })
-        .from(customerNotes)
-        .leftJoin(customers, eq(customerNotes.customerId, customers.id))
-        .where(and(eq(customerNotes.isCompleted, false), lte(customerNotes.reminderDate, sevenDaysFromNow)))
-        .orderBy(customerNotes.reminderDate)
-        .limit(5),
-      db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.status, 'nuovo')),
-      db.select({
-        customerName: orders.customerName,
-        customerEmail: orders.customerEmail,
-        totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)::text`,
-        orderCount: sql<number>`count(*)`,
-      })
-        .from(orders)
-        .where(gte(orders.createdAt, thisMonthStart))
-        .groupBy(orders.customerName, orders.customerEmail)
-        .orderBy(desc(sql`SUM(${orders.total}::numeric)`))
-        .limit(5),
-    ]);
-  } catch (e) {
-    console.error('Admin dashboard secondary queries failed:', e);
-  }
+    const r = await db.select({ count: sql<number>`count(*)` }).from(customers);
+    customerCountVal = Number(r[0]?.count || 0);
+  } catch (e) { console.error('customerCount failed:', e); }
 
   try {
-    const result = await db.execute(sql`
-      SELECT COUNT(DISTINCT "orders"."customer_id") as count
-      FROM "orders"
-      WHERE "orders"."created_at" < ${sixtyDaysAgo.toISOString()}::timestamp
-    `);
-    inactiveCountValue = Number((result as { rows?: { count: number }[] })?.rows?.[0]?.count || 0);
-  } catch (e) {
-    console.error('Inactive customers query failed:', e);
-  }
+    const r = await db.select({ count: sql<number>`count(*)` }).from(products).where(eq(products.isActive, true));
+    productCountVal = Number(r[0]?.count || 0);
+  } catch (e) { console.error('productCount failed:', e); }
 
   try {
-    abandonedCartCount = await db.select({ count: sql<number>`COUNT(DISTINCT ${cartItems.customerId})` })
+    recentOrders = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(5);
+  } catch (e) { console.error('recentOrders failed:', e); }
+
+  try {
+    latestImport = await db.select().from(csvImports).orderBy(desc(csvImports.importedAt)).limit(1);
+  } catch (e) { console.error('latestImport failed:', e); }
+
+  try {
+    const r = await db.select({ total: sql<number>`COALESCE(SUM(total::numeric), 0)` }).from(orders).where(eq(orders.paymentStatus, 'paid'));
+    revenueVal = Number(r[0]?.total || 0);
+  } catch (e) { console.error('revenue failed:', e); }
+
+  try {
+    topCustomers = await db.select({
+      customerName: orders.customerName,
+      customerEmail: orders.customerEmail,
+      totalSpent: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)::text`,
+      orderCount: sql<number>`count(*)`,
+    })
+      .from(orders)
+      .where(gte(orders.createdAt, new Date(new Date().getFullYear(), new Date().getMonth(), 1)))
+      .groupBy(orders.customerName, orders.customerEmail)
+      .orderBy(desc(sql`SUM(${orders.total}::numeric)`))
+      .limit(5);
+  } catch (e) { console.error('topCustomers failed:', e); }
+
+  try {
+    const r = await db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.status, 'nuovo'));
+    newQuoteCountVal = Number(r[0]?.count || 0);
+  } catch (e) { console.error('quoteCount failed:', e); }
+
+  try {
+    const r = await db.select({ count: sql<number>`COUNT(DISTINCT ${cartItems.customerId})` })
       .from(cartItems)
       .where(lt(cartItems.updatedAt, new Date(Date.now() - 2 * 60 * 60 * 1000)));
-  } catch (e) {
-    console.error('Abandoned cart query failed:', e);
-  }
+    abandonedCartCountVal = Number(r[0]?.count || 0);
+  } catch (e) { console.error('abandonedCart failed:', e); }
 
   const stats = [
-    { label: 'Ordini', value: Number(orderCount[0]?.count || 0), icon: ShoppingCart, color: 'bg-blue' },
-    { label: 'Clienti', value: Number(customerCount[0]?.count || 0), icon: Users, color: 'bg-green-600' },
-    { label: 'Prodotti attivi', value: Number(productCount[0]?.count || 0), icon: Package, color: 'bg-purple-600' },
+    { label: 'Ordini', value: orderCountVal, icon: ShoppingCart, color: 'bg-blue' },
+    { label: 'Clienti', value: customerCountVal, icon: Users, color: 'bg-green-600' },
+    { label: 'Prodotti attivi', value: productCountVal, icon: Package, color: 'bg-purple-600' },
     {
       label: 'Fatturato',
-      value: new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(revenue[0]?.total || 0)),
+      value: new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(revenueVal),
       icon: TrendingUp,
       color: 'bg-orange-500',
     },
@@ -166,7 +152,7 @@ export default async function AdminDashboard() {
       href: '/admin/preventivi',
       icon: ClipboardList,
       title: 'Preventivi',
-      description: `Gestire le richieste di preventivo dal sito.${Number(newQuoteCount[0]?.count || 0) > 0 ? ` (${newQuoteCount[0].count} nuov${Number(newQuoteCount[0].count) === 1 ? 'a' : 'e'})` : ''}`,
+      description: `Gestire le richieste di preventivo dal sito.${newQuoteCountVal > 0 ? ` (${newQuoteCountVal} nuov${newQuoteCountVal === 1 ? 'a' : 'e'})` : ''}`,
       color: 'text-pink-600',
       bg: 'bg-pink-50',
     },
@@ -279,7 +265,7 @@ export default async function AdminDashboard() {
             <h3 className="font-heading font-bold text-navy text-sm">Carrelli abbandonati</h3>
           </div>
           <p className="text-3xl font-bold text-navy mb-1">
-            {Number(abandonedCartCount[0]?.count || 0)}
+            {abandonedCartCountVal}
           </p>
           <p className="text-xs text-gray-500">Clienti con carrello da 2+ ore</p>
         </div>
@@ -318,35 +304,6 @@ export default async function AdminDashboard() {
             Stato: <span className="font-medium">{latestImport[0].status}</span> &mdash;{' '}
             {latestImport[0].productsNew} nuovi, {latestImport[0].productsUpdated} aggiornati
           </p>
-        </div>
-      )}
-
-      {/* Promemoria in scadenza */}
-      {upcomingReminders.length > 0 && (
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-heading font-bold text-navy flex items-center gap-2">
-              <Bell size={18} className="text-orange-500" />
-              Promemoria in scadenza
-            </h2>
-            <Link href="/admin/clienti" className="text-sm text-blue font-medium hover:underline">
-              Vedi clienti
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {upcomingReminders.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                <Bell size={16} className="text-orange-500 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{r.content}</p>
-                  <p className="text-xs text-gray-500">
-                    {r.customerName || 'Cliente'} &middot;{' '}
-                    {r.reminderDate ? new Date(r.reminderDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : ''}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
