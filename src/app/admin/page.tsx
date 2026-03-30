@@ -16,8 +16,8 @@ export default async function AdminDashboard() {
   let orderCountVal = 0;
   let customerCountVal = 0;
   let productCountVal = 0;
-  let recentOrders: typeof orders.$inferSelect[] = [];
-  let latestImport: typeof csvImports.$inferSelect[] = [];
+  let recentOrders: (typeof orders.$inferSelect)[] = [];
+  let latestImport: (typeof csvImports.$inferSelect)[] = [];
   let revenueVal = 0;
   let newQuoteCountVal = 0;
   let topCustomers: { customerName: string | null; customerEmail: string; totalSpent: string; orderCount: number }[] = [];
