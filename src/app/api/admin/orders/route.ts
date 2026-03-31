@@ -141,6 +141,9 @@ export async function GET(req: NextRequest) {
         vatAmount: orders.vatAmount,
         shippingCost: orders.shippingCost,
         total: orders.total,
+        costNoVat: orders.costNoVat,
+        margin: orders.margin,
+        forwardStatus: orders.forwardStatus,
         easyfattExported: orders.easyfattExported,
         createdAt: orders.createdAt,
         itemCount: sql<number>`(SELECT COUNT(*) FROM order_items WHERE order_id = ${orders.id})`,
@@ -193,7 +196,9 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, status, adminNotes, paymentStatus, deliveryType, supplierId } = body;
+    const { id, status, adminNotes, paymentStatus, deliveryType, supplierId,
+      fullFulfillment, balanceManagement, pricesOnInvoice, confirmationEmail,
+      deliveryMethod, csNotes, forwardStatus } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID ordine obbligatorio' }, { status: 400 });
@@ -233,6 +238,15 @@ export async function PUT(req: NextRequest) {
       }
       updateData.paymentStatus = paymentStatus;
     }
+
+    // E-Sell order options
+    if (fullFulfillment !== undefined) updateData.fullFulfillment = fullFulfillment;
+    if (balanceManagement !== undefined) updateData.balanceManagement = balanceManagement;
+    if (pricesOnInvoice !== undefined) updateData.pricesOnInvoice = pricesOnInvoice;
+    if (confirmationEmail !== undefined) updateData.confirmationEmail = confirmationEmail;
+    if (deliveryMethod !== undefined) updateData.deliveryMethod = deliveryMethod;
+    if (csNotes !== undefined) updateData.csNotes = csNotes;
+    if (forwardStatus !== undefined) updateData.forwardStatus = forwardStatus;
 
     // Handle delivery type and supplier forwarding
     let supplierOrderCreated = null;

@@ -212,6 +212,19 @@ export const orders = pgTable('orders', {
   deliveryType: varchar('delivery_type', { length: 20 }), // 'drop_ship' | 'sede_mos'
   supplierForwarded: boolean('supplier_forwarded').default(false).notNull(),
   supplierForwardedAt: timestamp('supplier_forwarded_at'),
+  forwardStatus: varchar('forward_status', { length: 30 }).default('da_inoltrare'), // 'da_inoltrare' | 'trasferito_al_fornitore'
+
+  // Opzioni ordine (E-Sell)
+  fullFulfillment: boolean('full_fulfillment').default(false), // Evasione totale: Sì=consegna unica, NO=anche parziale
+  balanceManagement: boolean('balance_management').default(true), // Gestione saldi: Sì=azzeramento automatico
+  pricesOnInvoice: boolean('prices_on_invoice').default(false), // Prezzi in bolla
+  confirmationEmail: text('confirmation_email'), // E-mail aggiuntiva conferma ordine
+  deliveryMethod: varchar('delivery_method', { length: 20 }).default('corriere'), // 'corriere' | 'ritiro'
+  csNotes: text('cs_notes'), // Comunicazioni al Customer Service O.D.
+
+  // Costi e margini
+  costNoVat: decimal('cost_no_vat', { precision: 10, scale: 2 }), // Costo totale senza IVA (acquisto)
+  margin: decimal('margin', { precision: 10, scale: 2 }), // Margine
 
   // Note
   notes: text('notes'),
@@ -244,9 +257,16 @@ export const orderItems = pgTable('order_items', {
   unit: varchar('unit', { length: 20 }).default('PZ'),
   qty: integer('qty').notNull(),
   priceUnit: decimal('price_unit', { precision: 10, scale: 2 }).notNull(),
+  purchasePrice: decimal('purchase_price', { precision: 10, scale: 2 }), // Prezzo acquisto unitario
   discountPct: decimal('discount_pct', { precision: 5, scale: 2 }).default('0'),
   vatPct: decimal('vat_pct', { precision: 5, scale: 2 }).notNull(),
   lineTotal: decimal('line_total', { precision: 10, scale: 2 }).notNull(),
+  supplierArticle: varchar('supplier_article', { length: 100 }), // Articolo Fornitore
+  availability: text('availability'), // Disponibilità (es. "Disp: 320")
+  packSize: integer('pack_size'), // Pezzi per Conf.
+  minSaleUnit: integer('min_sale_unit').default(1), // Unità minima vendita
+  qtyToForward: integer('qty_to_forward'), // Quantità da inoltrare al fornitore
+  isSelected: boolean('is_selected').default(true), // Selezione Articolo per inoltro
   isUrgent: boolean('is_urgent').default(false).notNull(),
 }, (table) => [
   index('order_items_order_idx').on(table.orderId),

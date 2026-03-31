@@ -5,6 +5,7 @@ import {
   Package, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Save, FileDown, FileSpreadsheet, ShoppingBag, TrendingUp, CalendarDays,
 } from 'lucide-react';
+import { SupplierForwardingSection } from './supplier-forwarding';
 
 interface OrderRow {
   id: number;
@@ -19,6 +20,9 @@ interface OrderRow {
   vatAmount: string;
   shippingCost: string;
   total: string;
+  costNoVat: string | null;
+  margin: string | null;
+  forwardStatus: string | null;
   easyfattExported: boolean;
   createdAt: string;
   itemCount: number;
@@ -49,6 +53,17 @@ interface OrderDetail {
   easyfattExported: boolean;
   easyfattDate: string | null;
   crmOrderId: string | null;
+  // E-Sell fields
+  deliveryType: string | null;
+  forwardStatus: string | null;
+  fullFulfillment: boolean | null;
+  balanceManagement: boolean | null;
+  pricesOnInvoice: boolean | null;
+  confirmationEmail: string | null;
+  deliveryMethod: string | null;
+  csNotes: string | null;
+  costNoVat: string | null;
+  margin: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,9 +78,16 @@ interface OrderItem {
   unit: string | null;
   qty: number;
   priceUnit: string;
+  purchasePrice: string | null;
   discountPct: string;
   vatPct: string;
   lineTotal: string;
+  supplierArticle: string | null;
+  availability: string | null;
+  packSize: number | null;
+  minSaleUnit: number | null;
+  qtyToForward: number | null;
+  isSelected: boolean | null;
 }
 
 interface OrderCustomer {
@@ -441,11 +463,16 @@ export default function AdminOrdiniPage() {
                     </th>
                     <th className="px-4 py-3 w-8"></th>
                     <th className="px-4 py-3 text-left">N. Ordine</th>
-                    <th className="px-4 py-3 text-left">Cliente</th>
                     <th className="px-4 py-3 text-left">Data</th>
+                    <th className="px-4 py-3 text-left">Cliente</th>
+                    <th className="px-4 py-3 text-right">Imponibile</th>
+                    <th className="px-4 py-3 text-right">IVA</th>
                     <th className="px-4 py-3 text-right">Totale</th>
-                    <th className="px-4 py-3 text-left">Stato</th>
+                    <th className="px-4 py-3 text-right">Costo</th>
+                    <th className="px-4 py-3 text-right">Margine</th>
+                    <th className="px-4 py-3 text-left">Inoltro</th>
                     <th className="px-4 py-3 text-left">Pagamento</th>
+                    <th className="px-4 py-3 text-left">Stato</th>
                     <th className="px-4 py-3 text-center">Azioni</th>
                   </tr>
                 </thead>
@@ -478,22 +505,72 @@ export default function AdminOrdiniPage() {
                           {order.orderNumber}
                         </td>
                         <td
-                          className="px-4 py-3 text-gray-600 cursor-pointer"
+                          className="px-4 py-3 text-gray-500 text-xs cursor-pointer"
+                          onClick={() => handleExpand(order.id)}
+                        >
+                          {formatDate(order.createdAt)}
+                        </td>
+                        <td
+                          className="px-4 py-3 text-gray-600 cursor-pointer max-w-[180px] truncate"
                           onClick={() => handleExpand(order.id)}
                         >
                           {order.customerName || order.customerEmail || '-'}
                         </td>
                         <td
-                          className="px-4 py-3 text-gray-500 cursor-pointer"
+                          className="px-4 py-3 text-right cursor-pointer"
                           onClick={() => handleExpand(order.id)}
                         >
-                          {formatDate(order.createdAt)}
+                          {formatCurrency(order.subtotal)}
+                        </td>
+                        <td
+                          className="px-4 py-3 text-right text-gray-500 cursor-pointer"
+                          onClick={() => handleExpand(order.id)}
+                        >
+                          {formatCurrency(order.vatAmount)}
                         </td>
                         <td
                           className="px-4 py-3 text-right font-medium cursor-pointer"
                           onClick={() => handleExpand(order.id)}
                         >
                           {formatCurrency(order.total)}
+                        </td>
+                        <td
+                          className="px-4 py-3 text-right text-gray-500 cursor-pointer"
+                          onClick={() => handleExpand(order.id)}
+                        >
+                          {order.costNoVat ? formatCurrency(order.costNoVat) : '-'}
+                        </td>
+                        <td
+                          className="px-4 py-3 text-right cursor-pointer"
+                          onClick={() => handleExpand(order.id)}
+                        >
+                          {order.margin ? (
+                            <span className={parseFloat(order.margin) >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                              {formatCurrency(order.margin)}
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td
+                          className="px-4 py-3 cursor-pointer"
+                          onClick={() => handleExpand(order.id)}
+                        >
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            order.forwardStatus === 'trasferito_al_fornitore'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {order.forwardStatus === 'trasferito_al_fornitore' ? 'Trasferito' : 'Da inoltrare'}
+                          </span>
+                        </td>
+                        <td
+                          className="px-4 py-3 cursor-pointer"
+                          onClick={() => handleExpand(order.id)}
+                        >
+                          <span className="text-xs text-gray-600">
+                            {order.paymentMethod === 'paypal' ? 'PayPal' :
+                             order.paymentMethod === 'bonifico' ? 'Bonifico' :
+                             order.paymentMethod || '-'}
+                          </span>
                         </td>
                         <td
                           className="px-4 py-3 cursor-pointer"
@@ -503,21 +580,9 @@ export default function AdminOrdiniPage() {
                             {statusLabels[order.status] || order.status}
                           </span>
                         </td>
-                        <td
-                          className="px-4 py-3 cursor-pointer"
-                          onClick={() => handleExpand(order.id)}
-                        >
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                            order.paymentStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {order.paymentStatus === 'paid' ? 'Pagato' : order.paymentStatus === 'failed' ? 'Fallito' : 'In attesa'}
-                          </span>
-                        </td>
                         <td className="px-4 py-3 text-center">
                           <span className={`text-xs ${order.easyfattExported ? 'text-green-600 font-bold' : 'text-gray-300'}`}>
-                            EF {order.easyfattExported ? 'Si' : 'No'}
+                            EF
                           </span>
                         </td>
                       </tr>
@@ -525,66 +590,154 @@ export default function AdminOrdiniPage() {
                       {/* Expanded detail */}
                       {expandedId === order.id && (
                         <tr key={`detail-${order.id}`}>
-                          <td colSpan={9} className="bg-gray-50 border-b">
+                          <td colSpan={13} className="bg-gray-50 border-b">
                             {detailLoading ? (
                               <div className="p-6 text-center text-gray-500">Caricamento dettagli ordine...</div>
                             ) : orderDetail ? (
                               <div className="p-6 space-y-6">
-                                {/* Order items table */}
+                                {/* TIPO SPEDIZIONE + OPZIONI ORDINE (E-Sell style) */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                  {/* Tipo Spedizione */}
+                                  <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                    <div className="bg-blue text-white text-center text-sm font-bold py-1.5 rounded mb-3">TIPO SPEDIZIONE</div>
+                                    <div className="flex gap-4">
+                                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                        <input type="radio" name={`delivery-${orderDetail.id}`}
+                                          checked={orderDetail.deliveryType === 'sede_mos' || !orderDetail.deliveryType}
+                                          onChange={() => {/* handled in save */}}
+                                          className="accent-blue" />
+                                        Consegna in sede
+                                      </label>
+                                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                        <input type="radio" name={`delivery-${orderDetail.id}`}
+                                          checked={orderDetail.deliveryType === 'drop_ship'}
+                                          onChange={() => {/* handled in save */}}
+                                          className="accent-blue" />
+                                        Consegna diretta al cliente
+                                      </label>
+                                    </div>
+                                  </div>
+
+                                  {/* Opzioni Ordine */}
+                                  <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                    <div className="bg-blue text-white text-center text-sm font-bold py-1.5 rounded mb-3">OPZIONI ORDINE</div>
+                                    <div className="space-y-2 text-sm">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Evasione totale</span>
+                                        <span className="font-medium">{orderDetail.fullFulfillment ? 'Sì - Consegna unica' : 'NO - Anche parziale'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Gestione saldi</span>
+                                        <span className="font-medium">{orderDetail.balanceManagement !== false ? 'Sì - Azzeramento automatico' : 'NO - Anche parziale'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Prezzi in bolla</span>
+                                        <span className="font-medium">{orderDetail.pricesOnInvoice ? 'Sì' : 'NO'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Consegna merce</span>
+                                        <span className="font-medium">{orderDetail.deliveryMethod === 'ritiro' ? 'Ritiro del cliente' : 'Corriere O.D.'}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Supplier forwarding */}
+                                <SupplierForwardingSection
+                                  orderId={orderDetail.id}
+                                  orderNumber={orderDetail.orderNumber}
+                                  onRefresh={() => fetchOrders(pagination.page)}
+                                />
+
+                                {/* Order items table - E-Sell style */}
                                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                                   <h3 className="font-heading font-bold text-navy mb-3">Righe ordine</h3>
                                   <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
-                                      <thead className="text-xs text-gray-500 uppercase border-b">
+                                      <thead className="text-xs text-gray-500 uppercase border-b bg-blue/5">
                                         <tr>
-                                          <th className="py-2 text-left">Prodotto</th>
-                                          <th className="py-2 text-left">Cod.</th>
-                                          <th className="py-2 text-right">Qtà</th>
-                                          <th className="py-2 text-right">Prezzo unit.</th>
-                                          <th className="py-2 text-right">Sconto</th>
-                                          <th className="py-2 text-right">IVA</th>
-                                          <th className="py-2 text-right">Totale riga</th>
+                                          <th className="py-2 px-2 text-center w-8">Riga</th>
+                                          <th className="py-2 px-2 text-left">Art. Fornitore</th>
+                                          <th className="py-2 px-2 text-left">Codice</th>
+                                          <th className="py-2 px-2 text-left">Descrizione</th>
+                                          <th className="py-2 px-2 text-left">Disponibilità</th>
+                                          <th className="py-2 px-2 text-right">P. Vendita</th>
+                                          <th className="py-2 px-2 text-right">P. Acquisto</th>
+                                          <th className="py-2 px-2 text-right">IVA</th>
+                                          <th className="py-2 px-2 text-center">Pz/Conf</th>
+                                          <th className="py-2 px-2 text-center">U.M.V.</th>
+                                          <th className="py-2 px-2 text-center">Qtà Rich.</th>
+                                          <th className="py-2 px-2 text-center">Qtà Inolt.</th>
+                                          <th className="py-2 px-2 text-center">Sel.</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y">
-                                        {orderItems.map((item) => (
-                                          <tr key={item.id}>
-                                            <td className="py-2">
-                                              <div className="font-medium text-navy">{item.productName}</div>
+                                        {orderItems.map((item, idx) => (
+                                          <tr key={item.id} className={item.isSelected === false ? 'bg-red-50 opacity-60' : ''}>
+                                            <td className="py-2 px-2 text-center text-gray-400">{idx + 1}</td>
+                                            <td className="py-2 px-2">
+                                              {item.supplierArticle ? (
+                                                <span className="inline-flex items-center gap-1">
+                                                  <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                                                </span>
+                                              ) : (
+                                                <span className="text-gray-300">-</span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-2 font-mono text-xs text-gray-600">{item.productCode}</td>
+                                            <td className="py-2 px-2">
+                                              <div className="font-medium text-navy text-xs leading-tight">{item.productName}</div>
                                               {item.productBrand && (
                                                 <div className="text-xs text-gray-400">{item.productBrand}</div>
                                               )}
                                             </td>
-                                            <td className="py-2 font-mono text-xs text-gray-500">{item.productCode}</td>
-                                            <td className="py-2 text-right font-medium">{item.qty} {item.unit || 'PZ'}</td>
-                                            <td className="py-2 text-right">{formatCurrency(item.priceUnit)}</td>
-                                            <td className="py-2 text-right">
-                                              {parseFloat(item.discountPct) > 0 ? `${item.discountPct}%` : '-'}
+                                            <td className="py-2 px-2 text-xs text-gray-500">{item.availability || '-'}</td>
+                                            <td className="py-2 px-2 text-right">{formatCurrency(item.priceUnit)}</td>
+                                            <td className="py-2 px-2 text-right text-orange-600">{item.purchasePrice ? formatCurrency(item.purchasePrice) : '-'}</td>
+                                            <td className="py-2 px-2 text-right text-gray-500">{item.vatPct}%</td>
+                                            <td className="py-2 px-2 text-center text-gray-500">{item.packSize || '-'}</td>
+                                            <td className="py-2 px-2 text-center text-gray-500">{item.minSaleUnit || 1}</td>
+                                            <td className="py-2 px-2 text-center font-medium">{item.qty}</td>
+                                            <td className="py-2 px-2 text-center font-medium text-blue">{item.qtyToForward ?? item.qty}</td>
+                                            <td className="py-2 px-2 text-center">
+                                              <input type="checkbox" checked={item.isSelected !== false} readOnly className="accent-blue" />
                                             </td>
-                                            <td className="py-2 text-right text-gray-500">{item.vatPct}%</td>
-                                            <td className="py-2 text-right font-medium">{formatCurrency(item.lineTotal)}</td>
                                           </tr>
                                         ))}
                                       </tbody>
-                                      <tfoot className="border-t-2 border-gray-200">
-                                        <tr>
-                                          <td colSpan={6} className="py-2 text-right text-gray-500">Subtotale</td>
-                                          <td className="py-2 text-right font-medium">{formatCurrency(orderDetail.subtotal)}</td>
-                                        </tr>
-                                        <tr>
-                                          <td colSpan={6} className="py-1 text-right text-gray-500">IVA</td>
-                                          <td className="py-1 text-right">{formatCurrency(orderDetail.vatAmount)}</td>
-                                        </tr>
-                                        <tr>
-                                          <td colSpan={6} className="py-1 text-right text-gray-500">Spedizione</td>
-                                          <td className="py-1 text-right">{formatCurrency(orderDetail.shippingCost || '0')}</td>
-                                        </tr>
-                                        <tr className="font-bold text-navy">
-                                          <td colSpan={6} className="py-2 text-right">Totale</td>
-                                          <td className="py-2 text-right text-lg">{formatCurrency(orderDetail.total)}</td>
-                                        </tr>
-                                      </tfoot>
                                     </table>
+                                  </div>
+
+                                  {/* Order summary */}
+                                  <div className="flex justify-end mt-4">
+                                    <div className="w-72 text-sm">
+                                      <div className="flex justify-between py-1 border-b">
+                                        <span className="text-gray-500">Totale righe</span>
+                                        <span>{orderItems.length}</span>
+                                      </div>
+                                      <div className="flex justify-between py-1 border-b">
+                                        <span className="text-gray-500">Imponibile</span>
+                                        <span className="font-medium">{formatCurrency(orderDetail.subtotal)}</span>
+                                      </div>
+                                      <div className="flex justify-between py-1 border-b">
+                                        <span className="text-gray-500">Spese spedizione</span>
+                                        <span>{formatCurrency(orderDetail.shippingCost || '0')}</span>
+                                      </div>
+                                      <div className="flex justify-between py-1 border-b">
+                                        <span className="text-gray-500">IVA</span>
+                                        <span>{formatCurrency(orderDetail.vatAmount)}</span>
+                                      </div>
+                                      <div className="flex justify-between py-1.5 border-b-2 border-navy font-bold text-navy">
+                                        <span>Totale</span>
+                                        <span className="text-lg">{formatCurrency(orderDetail.total)}</span>
+                                      </div>
+                                      {orderDetail.costNoVat && (
+                                        <div className="flex justify-between py-1 mt-1 text-orange-600">
+                                          <span>Ordine Costo di Acquisto</span>
+                                          <span className="font-medium">{formatCurrency(orderDetail.costNoVat)}</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
 
