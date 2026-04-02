@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
   let latestImport: (typeof csvImports.$inferSelect)[] = [];
   let revenueVal = 0;
   let newQuoteCountVal = 0;
-  let topCustomers: { customerName: string | null; customerEmail: string; totalSpent: string; orderCount: number }[] = [];
+  let topCustomers: { customerName: string | null; customerEmail: string | null; totalSpent: string; orderCount: number }[] = [];
   let inactiveCountValue = 0;
   let abandonedCartCountVal = 0;
 
