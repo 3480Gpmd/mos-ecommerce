@@ -1,44 +1,60 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-navy: #0f1923;
-  --color-navy-light: #1a2d3d;
+  /* MOS Brand */
+  --color-mos-red: #D51317;
+  --color-mos-red-hover: #B81013;
+  --color-mos-red-light: #FEF2F2;
+
+  /* Neutrals */
+  --color-dark: #1A1A1A;
+  --color-dark-soft: #2D2D2D;
+
+  /* Legacy tokens */
+  --color-navy: #1A1A1A;
+  --color-navy-light: #2D2D2D;
   --color-blue: #1d4ed8;
   --color-blue-light: #3b82f6;
-  --color-red: #dc2626;
+  --color-red: #D51317;
   --color-red-light: #ef4444;
-  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
-  --font-heading: var(--font-syne), system-ui, sans-serif;
+
+  /* Typography — Space Grotesk + Inter */
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-space-grotesk), system-ui, sans-serif;
 }
 
 body {
   background: #ffffff;
   color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .font-heading {
   font-family: var(--font-heading);
+  letter-spacing: -0.02em;
 }
 
-/* Animated page title */
+/* ─── Animations ─── */
+
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes lineExpand {
-  from {
-    width: 0;
-  }
-  to {
-    width: 3rem;
-  }
+  from { width: 0; }
+  to { width: 3rem; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(213, 19, 23, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(213, 19, 23, 0); }
 }
 
 .animate-slide-up {
@@ -49,10 +65,27 @@ body {
   animation: lineExpand 0.6s ease-out 0.3s both;
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-pulse-red {
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+/* ─── Utility ─── */
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Smooth transitions for all interactive elements */
+a, button {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
