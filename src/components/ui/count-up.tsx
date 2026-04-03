@@ -1,12 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 interface CountUpProps {
   end: number;
@@ -15,6 +9,11 @@ interface CountUpProps {
   suffix?: string;
   decimals?: number;
   className?: string;
+}
+
+function formatNumber(value: number, decimals: number, prefix: string, suffix: string): string {
+  const formatted = value.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${prefix}${formatted}${suffix}`;
 }
 
 export function CountUp({
@@ -26,39 +25,70 @@ export function CountUp({
   className = '',
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [hasPlayed, setHasPlayed] = useState(false);
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const [displayValue, setDisplayValue] = useState(formatNumber(0, decimals, prefix, suffix));
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || hasPlayed) return;
+    if (!el) return;
 
-    const obj = { val: 0 };
+    let cancelled = false;
 
-    const st = ScrollTrigger.create({
-      trigger: el,
-      start: 'top bottom-=60',
-      once: true,
-      onEnter: () => {
-        setHasPlayed(true);
-        gsap.to(obj, {
-          val: end,
-          duration,
-          ease: 'power2.out',
-          onUpdate: () => {
-            el.textContent = `${prefix}${obj.val.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}${suffix}`;
+    (async () => {
+      try {
+        const gsapModule = await import('gsap');
+        const scrollTriggerModule = await import('gsap/ScrollTrigger');
+
+        if (cancelled) return;
+
+        const gsap = gsapModule.default;
+        const { ScrollTrigger } = scrollTriggerModule;
+        gsap.registerPlugin(ScrollTrigger);
+
+        const obj = { val: 0 };
+
+        const st = ScrollTrigger.create({
+          trigger: el,
+          start: 'top bottom-=60',
+          once: true,
+          onEnter: () => {
+            gsap.to(obj, {
+              val: end,
+              duration,
+              ease: 'power2.out',
+              onUpdate: () => {
+                setDisplayValue(formatNumber(obj.val, decimals, prefix, suffix));
+              },
+            });
           },
         });
-      },
-    });
+
+        cleanupRef.current = () => {
+          st.kill();
+        };
+      } catch {
+        // If GSAP fails, show final value
+        if (!cancelled) {
+          setDisplayValue(formatNumber(end, decimals, prefix, suffix));
+        }
+      }
+    })();
+
+    // Safety: show final value after 3s
+    const safetyTimer = setTimeout(() => {
+      setDisplayValue(formatNumber(end, decimals, prefix, suffix));
+    }, 3000);
 
     return () => {
-      st.kill();
+      cancelled = true;
+      clearTimeout(safetyTimer);
+      cleanupRef.current?.();
     };
-  }, [end, duration, prefix, suffix, decimals, hasPlayed]);
+  }, [end, duration, prefix, suffix, decimals]);
 
   return (
     <span ref={ref} className={className}>
-      {prefix}0{suffix}
+      {displayValue}
     </span>
   );
 }

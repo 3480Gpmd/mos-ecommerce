@@ -234,13 +234,17 @@ export function Header() {
                 <ChevronDown size={13} className={`transition-transform opacity-60 ${serviziOpen ? 'rotate-180' : ''}`} />
               </button>
               {serviziOpen && (
-                <div className="absolute left-0 top-full z-50 bg-white shadow-xl rounded-b-xl border border-gray-100 w-[300px] p-5">
+                <div className="absolute left-0 top-full z-50 bg-white shadow-xl rounded-b-xl border border-gray-100 w-[320px] p-5">
                   <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Caffè e Bevande Calde</span>
                   <ul className="space-y-0.5 mb-4">
-                    <li><Link href="/servizi/macchine-caffe-comodato" className="block text-sm text-gray-600 hover:text-mos-red hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Macchine del caffè in comodato</Link></li>
-                    <li><Link href="/servizi/lavazza-firma" className="block text-sm text-gray-600 hover:text-mos-red hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Lavazza Firma</Link></li>
-                    <li><Link href="/servizi/caffe-borbone" className="block text-sm text-gray-600 hover:text-mos-red hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Caffè Borbone</Link></li>
-                    <li><Link href="/servizi/bevande-gise" className="block text-sm text-gray-600 hover:text-mos-red hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Bevande Gise</Link></li>
+                    <li>
+                      <Link href="/servizi/macchine-caffe-comodato" className="block text-sm font-semibold text-dark hover:text-mos-red hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Macchine del caffè in comodato</Link>
+                      <ul className="ml-3 border-l-2 border-gray-100 pl-3 space-y-0.5 mt-0.5 mb-1">
+                        <li><Link href="/servizi/lavazza-firma" className="block text-sm text-gray-500 hover:text-mos-red hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Lavazza Firma</Link></li>
+                        <li><Link href="/servizi/caffe-borbone" className="block text-sm text-gray-500 hover:text-mos-red hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Caffè Borbone</Link></li>
+                        <li><Link href="/servizi/bevande-gise" className="block text-sm text-gray-500 hover:text-mos-red hover:bg-gray-50 px-2 py-1.5 rounded-lg transition-colors" onClick={() => setServiziOpen(false)}>Bevande Gise</Link></li>
+                      </ul>
+                    </li>
                   </ul>
                   <div className="border-t border-gray-100 pt-3">
                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Bevande Fredde</span>
@@ -362,10 +366,14 @@ export function Header() {
               <li>
                 <span className="block px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Servizi</span>
                 <ul>
-                  <li><Link href="/servizi/macchine-caffe-comodato" className="block px-3 py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Macchine caffè in comodato</Link></li>
-                  <li><Link href="/servizi/lavazza-firma" className="block px-3 py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Lavazza Firma</Link></li>
-                  <li><Link href="/servizi/caffe-borbone" className="block px-3 py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Caffè Borbone</Link></li>
-                  <li><Link href="/servizi/bevande-gise" className="block px-3 py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Bevande Gise</Link></li>
+                  <li>
+                    <Link href="/servizi/macchine-caffe-comodato" className="block px-3 py-2 text-sm font-semibold text-gray-200 hover:text-white" onClick={() => setMenuOpen(false)}>Macchine del caffè in comodato</Link>
+                    <ul className="ml-4 border-l-2 border-white/10 pl-3 space-y-0.5 mb-1">
+                      <li><Link href="/servizi/lavazza-firma" className="block px-2 py-1.5 text-sm text-gray-400 hover:text-white" onClick={() => setMenuOpen(false)}>Lavazza Firma</Link></li>
+                      <li><Link href="/servizi/caffe-borbone" className="block px-2 py-1.5 text-sm text-gray-400 hover:text-white" onClick={() => setMenuOpen(false)}>Caffè Borbone</Link></li>
+                      <li><Link href="/servizi/bevande-gise" className="block px-2 py-1.5 text-sm text-gray-400 hover:text-white" onClick={() => setMenuOpen(false)}>Bevande Gise</Link></li>
+                    </ul>
+                  </li>
                   <li><Link href="/servizi/dispenser-boccioni" className="block px-3 py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Dispenser e boccioni</Link></li>
                 </ul>
               </li>

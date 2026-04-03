@@ -1,12 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { useEffect, useRef, useState } from 'react';
 
 interface ScrollRevealProps {
   children: React.ReactNode;
@@ -28,36 +22,72 @@ export function ScrollReveal({
   single = false,
 }: ScrollRevealProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [revealed, setRevealed] = useState(false);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const targets = single ? [el] : Array.from(el.children);
+    let cancelled = false;
 
-    gsap.set(targets, { y: distance, opacity: 0 });
+    (async () => {
+      try {
+        const gsapModule = await import('gsap');
+        const scrollTriggerModule = await import('gsap/ScrollTrigger');
 
-    const tween = gsap.to(targets, {
-      y: 0,
-      opacity: 1,
-      duration,
-      stagger: single ? 0 : stagger,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: el,
-        start,
-        toggleActions: 'play none none none',
-      },
-    });
+        if (cancelled) return;
+
+        const gsap = gsapModule.default;
+        const { ScrollTrigger } = scrollTriggerModule;
+        gsap.registerPlugin(ScrollTrigger);
+
+        const targets = single ? [el] : Array.from(el.children);
+
+        gsap.set(targets, { y: distance, opacity: 0 });
+
+        const tween = gsap.to(targets, {
+          y: 0,
+          opacity: 1,
+          duration,
+          stagger: single ? 0 : stagger,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start,
+            toggleActions: 'play none none none',
+          },
+        });
+
+        cleanupRef.current = () => {
+          tween.scrollTrigger?.kill();
+          tween.kill();
+        };
+      } catch {
+        if (!cancelled) {
+          setRevealed(true);
+        }
+      }
+    })();
+
+    // Safety timeout: if GSAP hasn't revealed content after 2s, force show
+    const safetyTimer = setTimeout(() => {
+      setRevealed(true);
+    }, 2000);
 
     return () => {
-      tween.scrollTrigger?.kill();
-      tween.kill();
+      cancelled = true;
+      clearTimeout(safetyTimer);
+      cleanupRef.current?.();
     };
   }, [distance, duration, stagger, start, single]);
 
   return (
-    <div ref={containerRef} className={className}>
+    <div
+      ref={containerRef}
+      className={className}
+      style={revealed ? { opacity: 1, transform: 'translateY(0)' } : undefined}
+    >
       {children}
     </div>
   );
