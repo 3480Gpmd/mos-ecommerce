@@ -1,23 +1,20 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
+import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface ScrollRevealProps {
   children: React.ReactNode;
   className?: string;
-  /** Stagger delay for direct children (default 0.15s) */
   stagger?: number;
-  /** Distance from bottom in px (default 40) */
   distance?: number;
-  /** Animation duration in seconds (default 0.7) */
   duration?: number;
-  /** Trigger offset from bottom of viewport (default "bottom-=80") */
   start?: string;
-  /** Animate as a single element rather than staggering children */
   single?: boolean;
 }
 
@@ -36,11 +33,11 @@ export function ScrollReveal({
     const el = containerRef.current;
     if (!el) return;
 
-    const targets = single ? el : el.children;
+    const targets = single ? [el] : Array.from(el.children);
 
     gsap.set(targets, { y: distance, opacity: 0 });
 
-    gsap.to(targets, {
+    const tween = gsap.to(targets, {
       y: 0,
       opacity: 1,
       duration,
@@ -54,9 +51,8 @@ export function ScrollReveal({
     });
 
     return () => {
-      ScrollTrigger.getAll().forEach((trigger: { trigger: Element | null; kill: () => void }) => {
-        if (trigger.trigger === el) trigger.kill();
-      });
+      tween.scrollTrigger?.kill();
+      tween.kill();
     };
   }, [distance, duration, stagger, start, single]);
 

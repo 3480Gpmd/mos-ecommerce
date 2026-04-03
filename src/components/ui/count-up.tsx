@@ -1,20 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
+import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface CountUpProps {
   end: number;
-  /** Duration in seconds (default 2) */
   duration?: number;
-  /** Prefix (e.g. "+" or "€") */
   prefix?: string;
-  /** Suffix (e.g. "+" or "k") */
   suffix?: string;
-  /** Decimal places (default 0) */
   decimals?: number;
   className?: string;
 }
@@ -36,7 +34,7 @@ export function CountUp({
 
     const obj = { val: 0 };
 
-    ScrollTrigger.create({
+    const st = ScrollTrigger.create({
       trigger: el,
       start: 'top bottom-=60',
       once: true,
@@ -54,9 +52,7 @@ export function CountUp({
     });
 
     return () => {
-      ScrollTrigger.getAll().forEach((trigger: { trigger: Element | null; kill: () => void }) => {
-        if (trigger.trigger === el) trigger.kill();
-      });
+      st.kill();
     };
   }, [end, duration, prefix, suffix, decimals, hasPlayed]);
 
