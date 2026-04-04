@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import type { Metadata } from 'next';
 import {
   Coffee, Droplets, Printer, ArrowRight, CheckCircle2,
   Building2, Truck, Receipt, Headphones, Repeat,

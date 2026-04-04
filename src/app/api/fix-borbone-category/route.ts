@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { productCategories, products } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 /**
  * FIX: Unifica le due categorie "Caffè Borbone" duplicate.
@@ -36,13 +36,12 @@ export async function POST() {
 
     // 2. Sposta prodotti dalle categorie duplicate alla principale
     for (const dupe of dupes) {
-      const moved = await db
+      await db
         .update(products)
         .set({ categoryId: goodCat.id })
         .where(eq(products.categoryId, dupe.id));
 
-      const movedCount = moved.rowCount ?? 0;
-      results.push(`Prodotti spostati da id=${dupe.id} (${dupe.name}): ${movedCount}`);
+      results.push(`Prodotti spostati da id=${dupe.id} (${dupe.name})`);
 
       // 3. Elimina la categoria duplicata
       await db.delete(productCategories).where(eq(productCategories.id, dupe.id));

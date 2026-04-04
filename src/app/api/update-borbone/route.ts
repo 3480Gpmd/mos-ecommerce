@@ -312,11 +312,11 @@ export async function POST() {
       const dupes = borboneCategories.filter((c) => c.id !== goodCat.id);
 
       for (const dupe of dupes) {
-        const moved = await db
+        await db
           .update(products)
           .set({ categoryId: goodCat.id })
           .where(eq(products.categoryId, dupe.id));
-        results.push(`FIX: Spostati ${moved.rowCount ?? 0} prodotti da categoria duplicata id=${dupe.id}`);
+        results.push(`FIX: Prodotti spostati da categoria duplicata id=${dupe.id}`);
 
         await db.delete(productCategories).where(eq(productCategories.id, dupe.id));
         results.push(`FIX: Categoria duplicata id=${dupe.id} eliminata`);
