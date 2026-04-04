@@ -11,6 +11,10 @@ const quoteSchema = z.object({
   phone: z.string().optional(),
   message: z.string().optional(),
   interests: z.string().optional(), // comma-separated
+  employeeCount: z.string().optional(),
+  smartWorking: z.string().optional(),
+  currentProduct: z.string().optional(),
+  issues: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -21,12 +25,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
+    // Componi messaggio completo con le nuove info
+    const extraInfo = [
+      parsed.data.employeeCount ? `Persone in azienda: ${parsed.data.employeeCount}` : '',
+      parsed.data.smartWorking ? `Smart working: ${parsed.data.smartWorking}` : '',
+      parsed.data.currentProduct ? `Prodotto attuale: ${parsed.data.currentProduct}` : '',
+      parsed.data.issues ? `Criticità: ${parsed.data.issues}` : '',
+    ].filter(Boolean).join('\n');
+
+    const fullMessage = [parsed.data.message, extraInfo].filter(Boolean).join('\n\n---\n');
+
     const [quote] = await db.insert(quoteRequests).values({
       companyName: parsed.data.companyName || null,
       contactName: parsed.data.contactName,
       email: parsed.data.email,
       phone: parsed.data.phone || null,
-      message: parsed.data.message || null,
+      message: fullMessage || null,
       interests: parsed.data.interests || null,
     }).returning();
 
@@ -36,7 +50,7 @@ export async function POST(request: NextRequest) {
       companyName: parsed.data.companyName,
       email: parsed.data.email,
       phone: parsed.data.phone,
-      message: parsed.data.message,
+      message: fullMessage,
       interests: parsed.data.interests,
     });
     sendEmail({ to: getAdminEmail(), ...emailTemplate }).catch(console.error);

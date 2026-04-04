@@ -23,6 +23,7 @@ export function ScrollReveal({
 }: ScrollRevealProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [revealed, setRevealed] = useState(false);
+  const gsapReady = useRef(false);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -41,6 +42,8 @@ export function ScrollReveal({
         const gsap = gsapModule.default;
         const { ScrollTrigger } = scrollTriggerModule;
         gsap.registerPlugin(ScrollTrigger);
+
+        gsapReady.current = true;
 
         const targets = single ? [el] : Array.from(el.children);
 
@@ -70,10 +73,24 @@ export function ScrollReveal({
       }
     })();
 
-    // Safety timeout: if GSAP hasn't revealed content after 2s, force show
+    // Safety timeout: if GSAP animation hasn't played after 3s, force show
+    // This also clears GSAP inline styles on children so they become visible
     const safetyTimer = setTimeout(() => {
-      setRevealed(true);
-    }, 2000);
+      if (!cancelled) {
+        const el2 = containerRef.current;
+        if (el2 && gsapReady.current) {
+          // GSAP set opacity:0 on children — clear those inline styles
+          const targets = single ? [el2] : Array.from(el2.children);
+          targets.forEach((t) => {
+            if (t instanceof HTMLElement) {
+              t.style.opacity = '1';
+              t.style.transform = 'translateY(0px)';
+            }
+          });
+        }
+        setRevealed(true);
+      }
+    }, 3000);
 
     return () => {
       cancelled = true;

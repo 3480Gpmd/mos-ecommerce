@@ -6,8 +6,13 @@ import { eq } from 'drizzle-orm';
 /* ═══════════════════════════════════════════════════════════════
    CAFFÈ BORBONE — CATALOGO COMPLETO A MODO MIO + DOLCE GUSTO
    Prezzi REALI dal sito caffeborbone.com (aprile 2026) + 5%
+   Immagini REALI dal sito caffeborbone.com
    Prezzo netto = pricePublic / 1.22 (IVA 22%)
+   Include FIX: unificazione categorie duplicate
    ═══════════════════════════════════════════════════════════════ */
+
+// Base URL immagini Borbone
+const IMG = 'https://www.caffeborbone.com/dw/image/v2/BHCB_PRD/on/demandware.static/-/Sites-master-catalog/default';
 
 const AMM_PRODUCTS = [
   // ─── A MODO MIO — Don Carlo 100 capsule ─────────────────
@@ -18,7 +23,7 @@ const AMM_PRODUCTS = [
     priceNet: '21.39',
     pricePublic: '26.09',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-AMM-ROSSA-100',
@@ -27,7 +32,7 @@ const AMM_PRODUCTS = [
     priceNet: '20.27',
     pricePublic: '24.73',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-rossa.jpg',
+    imageUrl: `${IMG}/dw944c51dc/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-rossa_01.jpg`,
   },
   {
     code: 'BORB-AMM-NERA-100',
@@ -36,27 +41,27 @@ const AMM_PRODUCTS = [
     priceNet: '19.45',
     pricePublic: '23.73',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-nera.jpg',
+    imageUrl: `${IMG}/dw8e2a26ff/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-nera_01.jpg`,
   },
   {
     code: 'BORB-AMM-DEK-100',
-    name: 'Caffè Borbone Don Carlo Miscela Dek - 100 Capsule A Modo Mio',
+    name: 'Caffè Borbone Don Carlo Miscela Dek (Verde) - 100 Capsule A Modo Mio',
     description: 'La Miscela Dek offre tutto il piacere del caffè napoletano senza caffeina. Decaffeinato naturalmente, mantiene un gusto ricco e pieno con crema vellutata. Processo di decaffeinizzazione naturale. Intensità: 6/10. Tostatura: media. Capsule autoprotette compatibili con tutte le macchine Lavazza® A Modo Mio®. Peso netto: 7,2g per capsula.',
     priceNet: '22.47',
     pricePublic: '27.41',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-dek.jpg',
+    imageUrl: `${IMG}/dw083dba56/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-verde-dek_01.jpg`,
   },
 
   // ─── A MODO MIO — Compostabili 100 capsule ──────────────
   {
     code: 'BORB-AMM-COMP-ORO-100',
     name: 'Caffè Borbone Compostabili Miscela Oro - 100 Capsule A Modo Mio',
-    description: 'Le capsule Compostabili Miscela Oro rappresentano l\'eccellenza di Caffè Borbone in chiave sostenibile. Capsule 100% compostabili compatibili Lavazza® A Modo Mio® con un gusto equilibrato, armonioso e avvolgente. Note dolci e delicate sfumature di frutta secca. Prevalenza Arabica. Intensità: 7/10. Tostatura: media-chiara. Capsule certificate compostabili secondo la norma EN 13432.',
+    description: 'Le capsule Compostabili Miscela Oro rappresentano l\'eccellenza di Caffè Borbone in chiave sostenibile. Capsule 100% compostabili compatibili Lavazza® A Modo Mio® con un gusto equilibrato, armonioso e avvolgente. Note dolci e delicate sfumature di frutta secca. Prevalenza Arabica. Intensità: 7/10. Tostatura: media-chiara. Certificate compostabili EN 13432.',
     priceNet: '23.54',
     pricePublic: '28.72',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-oro.jpg',
+    imageUrl: `${IMG}/dwd87d09dc/capsule-compatibili/lavazza-a-modo-mio/compostabile/capsule-don-carlo-compostabili-borbone-miscela-oro_01.jpg`,
   },
   {
     code: 'BORB-AMM-COMP-ROSSA-100',
@@ -65,18 +70,18 @@ const AMM_PRODUCTS = [
     priceNet: '22.25',
     pricePublic: '27.14',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-rossa.jpg',
+    imageUrl: `${IMG}/dw677490e6/capsule-compatibili/lavazza-a-modo-mio/compostabile/capsule-don-carlo-compostabili-borbone-miscela-rossa_01.jpg`,
   },
 
   // ─── A MODO MIO — Light 100 capsule ─────────────────────
   {
     code: 'BORB-AMM-LIGHT-100',
-    name: 'Caffè Borbone Light Miscela - 100 Capsule A Modo Mio',
-    description: 'La miscela Light è pensata per chi desidera un caffè più leggero ma senza rinunciare al gusto. Contenuto ridotto di caffeina per un espresso dolce, delicato e facilmente digeribile. Ideale per i momenti di relax. Capsule compatibili Lavazza® A Modo Mio®. Peso netto: 7,2g per capsula.',
+    name: 'Caffè Borbone Light (50% Blu, 50% Dek) - 100 Capsule A Modo Mio',
+    description: 'La miscela Light è pensata per chi desidera un caffè più leggero ma senza rinunciare al gusto. Mix 50% Miscela Blu e 50% Miscela Dek per un espresso dolce, delicato e facilmente digeribile con contenuto ridotto di caffeina. Capsule compatibili Lavazza® A Modo Mio®. Peso netto: 7,2g per capsula.',
     priceNet: '21.73',
     pricePublic: '26.51',
     packSize: 100,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dw6a587d6e/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-light_01.jpg`,
   },
 
   // ─── A MODO MIO — Confezione da 50 ─────────────────────
@@ -87,7 +92,7 @@ const AMM_PRODUCTS = [
     priceNet: '12.04',
     pricePublic: '14.69',
     packSize: 50,
-    imageUrl: '/products/borbone/respresso-oro.jpg',
+    imageUrl: `${IMG}/dwdb55f322/capsule-compatibili/lavazza-a-modo-mio/compostabile/capsule-compostabili-borbone-arabica-50pz_01.jpg`,
   },
 
   // ─── A MODO MIO — Solubili 16 capsule ──────────────────
@@ -98,7 +103,7 @@ const AMM_PRODUCTS = [
     priceNet: '4.12',
     pricePublic: '5.03',
     packSize: 16,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwb74d69f9/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-orzo_01.jpg`,
   },
   {
     code: 'BORB-AMM-TE-LIMONE-16',
@@ -107,7 +112,7 @@ const AMM_PRODUCTS = [
     priceNet: '4.12',
     pricePublic: '5.03',
     packSize: 16,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dw4abe6e63/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-te-limone_01.jpg`,
   },
   {
     code: 'BORB-AMM-GINSENG-16',
@@ -116,7 +121,7 @@ const AMM_PRODUCTS = [
     priceNet: '4.12',
     pricePublic: '5.03',
     packSize: 16,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dw8f3ce84b/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-ginseng_01.jpg`,
   },
   {
     code: 'BORB-AMM-GINSENG-ZERO-16',
@@ -125,7 +130,7 @@ const AMM_PRODUCTS = [
     priceNet: '4.12',
     pricePublic: '5.03',
     packSize: 16,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dw1c7a2e55/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-ginseng-zero_01.jpg`,
   },
 ];
 
@@ -134,11 +139,11 @@ const DG_PRODUCTS = [
   {
     code: 'BORB-DG-BLU-90',
     name: 'Caffè Borbone Dolce Re Miscela Blu - 90 Capsule Dolce Gusto',
-    description: 'La Miscela Blu di Borbone in capsule compatibili Nescafé® Dolce Gusto®. Gusto equilibrato, intenso e cremoso con note di cioccolato fondente e retrogusto dolce. Miscela Arabica/Robusta bilanciata. Intensità: 8/10. Tostatura: media. Capsule sigillate senza linguetta. Peso netto: 7g per capsula. Compatibili con tutte le macchine Dolce Gusto® Krups e DeLonghi.',
+    description: 'La Miscela Blu di Borbone in capsule compatibili Nescafé® Dolce Gusto®. Gusto equilibrato, intenso e cremoso con note di cioccolato fondente e retrogusto dolce. Miscela Arabica/Robusta bilanciata. Intensità: 8/10. Tostatura: media. Peso netto: 7g per capsula. Compatibili con tutte le macchine Dolce Gusto® Krups e DeLonghi.',
     priceNet: '18.93',
     pricePublic: '23.09',
     packSize: 90,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-DG-ROSSA-90',
@@ -147,7 +152,7 @@ const DG_PRODUCTS = [
     priceNet: '18.93',
     pricePublic: '23.09',
     packSize: 90,
-    imageUrl: '/products/borbone/respresso-rossa.jpg',
+    imageUrl: `${IMG}/dw944c51dc/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-rossa_01.jpg`,
   },
   {
     code: 'BORB-DG-ORO-90',
@@ -156,7 +161,7 @@ const DG_PRODUCTS = [
     priceNet: '18.93',
     pricePublic: '23.09',
     packSize: 90,
-    imageUrl: '/products/borbone/respresso-oro.jpg',
+    imageUrl: `${IMG}/dwd87d09dc/capsule-compatibili/lavazza-a-modo-mio/compostabile/capsule-don-carlo-compostabili-borbone-miscela-oro_01.jpg`,
   },
   {
     code: 'BORB-DG-NERA-90',
@@ -165,7 +170,7 @@ const DG_PRODUCTS = [
     priceNet: '18.93',
     pricePublic: '23.09',
     packSize: 90,
-    imageUrl: '/products/borbone/respresso-nera.jpg',
+    imageUrl: `${IMG}/dw8e2a26ff/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-nera_01.jpg`,
   },
   {
     code: 'BORB-DG-DEK-90',
@@ -174,7 +179,7 @@ const DG_PRODUCTS = [
     priceNet: '18.93',
     pricePublic: '23.09',
     packSize: 90,
-    imageUrl: '/products/borbone/respresso-dek.jpg',
+    imageUrl: `${IMG}/dw083dba56/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-verde-dek_01.jpg`,
   },
 
   // ─── DOLCE GUSTO — Confezione piccola ──────────────────
@@ -185,7 +190,7 @@ const DG_PRODUCTS = [
     priceNet: '10.32',
     pricePublic: '12.59',
     packSize: 48,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-DG-ROSSA-48',
@@ -194,7 +199,7 @@ const DG_PRODUCTS = [
     priceNet: '10.32',
     pricePublic: '12.59',
     packSize: 48,
-    imageUrl: '/products/borbone/respresso-rossa.jpg',
+    imageUrl: `${IMG}/dw944c51dc/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-rossa_01.jpg`,
   },
   {
     code: 'BORB-DG-ORO-48',
@@ -203,7 +208,7 @@ const DG_PRODUCTS = [
     priceNet: '10.32',
     pricePublic: '12.59',
     packSize: 48,
-    imageUrl: '/products/borbone/respresso-oro.jpg',
+    imageUrl: `${IMG}/dwd87d09dc/capsule-compatibili/lavazza-a-modo-mio/compostabile/capsule-don-carlo-compostabili-borbone-miscela-oro_01.jpg`,
   },
   {
     code: 'BORB-DG-NERA-48',
@@ -212,7 +217,7 @@ const DG_PRODUCTS = [
     priceNet: '10.32',
     pricePublic: '12.59',
     packSize: 48,
-    imageUrl: '/products/borbone/respresso-nera.jpg',
+    imageUrl: `${IMG}/dw8e2a26ff/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-nera_01.jpg`,
   },
   {
     code: 'BORB-DG-DEK-48',
@@ -221,7 +226,7 @@ const DG_PRODUCTS = [
     priceNet: '10.32',
     pricePublic: '12.59',
     packSize: 48,
-    imageUrl: '/products/borbone/respresso-dek.jpg',
+    imageUrl: `${IMG}/dw083dba56/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-verde-dek_01.jpg`,
   },
 
   // ─── DOLCE GUSTO — Solubili 64 capsule ─────────────────
@@ -232,7 +237,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-DG-GINSENG-64',
@@ -241,7 +246,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dw8f3ce84b/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-ginseng_01.jpg`,
   },
   {
     code: 'BORB-DG-CORTADO-64',
@@ -250,7 +255,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-DG-NOCCIOLONE-64',
@@ -259,7 +264,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-DG-SUPERCIOK-64',
@@ -268,7 +273,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwc2e612df/capsule-compatibili/lavazza-a-modo-mio/capsule-don-carlo-borbone-miscela-blu_01.jpg`,
   },
   {
     code: 'BORB-DG-SUPERGINSENG-64',
@@ -277,7 +282,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dw8f3ce84b/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-ginseng_01.jpg`,
   },
   {
     code: 'BORB-DG-ORZO-64',
@@ -286,7 +291,7 @@ const DG_PRODUCTS = [
     priceNet: '18.90',
     pricePublic: '23.06',
     packSize: 64,
-    imageUrl: '/products/borbone/respresso-blu.jpg',
+    imageUrl: `${IMG}/dwb74d69f9/capsule-compatibili/lavazza-a-modo-mio/solubili/capsule-don-carlo-borbone-orzo_01.jpg`,
   },
 ];
 
@@ -294,7 +299,41 @@ export async function POST() {
   try {
     const results: string[] = [];
 
-    // 1. Trova il gruppo CAFFÈ
+    // ══════════════════════════════════════════════════════════
+    // STEP 0: FIX CATEGORIA DUPLICATA "Caffè Borbone"
+    // ══════════════════════════════════════════════════════════
+    const borboneCategories = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.slug, 'caffe-borbone'));
+
+    if (borboneCategories.length > 1) {
+      const goodCat = borboneCategories.reduce((a, b) => (a.id < b.id ? a : b));
+      const dupes = borboneCategories.filter((c) => c.id !== goodCat.id);
+
+      for (const dupe of dupes) {
+        const moved = await db
+          .update(products)
+          .set({ categoryId: goodCat.id })
+          .where(eq(products.categoryId, dupe.id));
+        results.push(`FIX: Spostati ${moved.rowCount ?? 0} prodotti da categoria duplicata id=${dupe.id}`);
+
+        await db.delete(productCategories).where(eq(productCategories.id, dupe.id));
+        results.push(`FIX: Categoria duplicata id=${dupe.id} eliminata`);
+      }
+
+      await db
+        .update(productCategories)
+        .set({ name: 'Caffè Borbone' })
+        .where(eq(productCategories.id, goodCat.id));
+      results.push('FIX: Nome normalizzato a "Caffè Borbone"');
+    } else {
+      results.push('Nessuna categoria duplicata trovata');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 1: Trova gruppo/categoria/sottocategorie
+    // ══════════════════════════════════════════════════════════
     const [group] = await db
       .select()
       .from(productGroups)
@@ -305,7 +344,6 @@ export async function POST() {
       return NextResponse.json({ error: 'Gruppo GRP-CAFFE non trovato. Esegui prima seed-borbone.' }, { status: 400 });
     }
 
-    // 2. Trova la categoria BORBONE
     const [catBorbone] = await db
       .select()
       .from(productCategories)
@@ -316,7 +354,6 @@ export async function POST() {
       return NextResponse.json({ error: 'Categoria CAT-BORBONE non trovata. Esegui prima seed-borbone.' }, { status: 400 });
     }
 
-    // 3. Trova le sottocategorie
     const [subcatAMM] = await db
       .select()
       .from(productSubcategories)
@@ -333,7 +370,9 @@ export async function POST() {
       return NextResponse.json({ error: 'Sottocategorie AMM/DG non trovate. Esegui prima seed-borbone.' }, { status: 400 });
     }
 
-    // 4. Aggiorna/inserisci prodotti A MODO MIO
+    // ══════════════════════════════════════════════════════════
+    // STEP 2: Upsert prodotti A MODO MIO
+    // ══════════════════════════════════════════════════════════
     let ammCreated = 0;
     let ammUpdated = 0;
 
@@ -385,7 +424,7 @@ export async function POST() {
     }
     results.push(`A Modo Mio — Creati: ${ammCreated}, Aggiornati: ${ammUpdated}`);
 
-    // 5. Disattiva vecchi codici AMM (seed originale senza suffisso pack)
+    // Disattiva vecchi codici AMM
     const oldAMMCodes = ['BORB-AMM-BLU', 'BORB-AMM-ROSSA', 'BORB-AMM-ORO', 'BORB-AMM-NERA', 'BORB-AMM-DEK',
       'BORB-AMM-ORO-100', 'BORB-AMM-GRANRIS-100', 'BORB-AMM-BLU-50', 'BORB-AMM-ROSSA-50', 'BORB-AMM-ORO-50', 'BORB-AMM-NERA-50', 'BORB-AMM-DEK-50'];
     let oldDeactivated = 0;
@@ -398,7 +437,9 @@ export async function POST() {
     }
     if (oldDeactivated > 0) results.push(`Vecchi codici AMM disattivati: ${oldDeactivated}`);
 
-    // 6. Aggiorna/inserisci prodotti DOLCE GUSTO
+    // ══════════════════════════════════════════════════════════
+    // STEP 3: Upsert prodotti DOLCE GUSTO
+    // ══════════════════════════════════════════════════════════
     let dgCreated = 0;
     let dgUpdated = 0;
 
@@ -450,7 +491,7 @@ export async function POST() {
     }
     results.push(`Dolce Gusto — Creati: ${dgCreated}, Aggiornati: ${dgUpdated}`);
 
-    // 7. Disattiva vecchi codici DG
+    // Disattiva vecchi codici DG
     const oldDGCodes = ['BORB-DG-BLU', 'BORB-DG-ROSSA', 'BORB-DG-ORO', 'BORB-DG-NERA', 'BORB-DG-DEK'];
     let oldDGDeactivated = 0;
     for (const code of oldDGCodes) {
@@ -469,6 +510,7 @@ export async function POST() {
         aModMio: { created: ammCreated, updated: ammUpdated, total: AMM_PRODUCTS.length },
         dolceGusto: { created: dgCreated, updated: dgUpdated, total: DG_PRODUCTS.length },
         prezzi: 'Listino Borbone reale (aprile 2026) + 5%',
+        immagini: 'URL reali da caffeborbone.com',
       },
     });
   } catch (error) {

@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: 'www.identiprint.it',
         pathname: '/img_prodotti/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.caffeborbone.com',
+        pathname: '/dw/image/**',
+      },
     ],
   },
 };

@@ -12,6 +12,7 @@ import {
 export default function AziendePage() {
   const [form, setForm] = useState({
     contactName: '', companyName: '', email: '', phone: '', message: '', interests: [] as string[],
+    employeeCount: '', smartWorking: '', smartWorkingDays: '', currentProduct: '', issues: '',
   });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -36,6 +37,7 @@ export default function AziendePage() {
         body: JSON.stringify({
           ...form,
           interests: form.interests.join(', '),
+          smartWorking: form.smartWorking === 'si' ? `Sì — ${form.smartWorkingDays || '?'} gg/settimana` : form.smartWorking === 'no' ? 'No' : '',
         }),
       });
       if (!res.ok) throw new Error('Errore invio');
@@ -194,6 +196,89 @@ export default function AziendePage() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Persone in azienda */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quante persone ci sono in azienda?</label>
+                  <select
+                    value={form.employeeCount}
+                    onChange={(e) => setForm({ ...form, employeeCount: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue bg-white"
+                  >
+                    <option value="">Seleziona...</option>
+                    <option value="1-5">1–5 persone</option>
+                    <option value="6-15">6–15 persone</option>
+                    <option value="16-30">16–30 persone</option>
+                    <option value="31-50">31–50 persone</option>
+                    <option value="51-100">51–100 persone</option>
+                    <option value="100+">Oltre 100 persone</option>
+                  </select>
+                </div>
+
+                {/* Smart Working */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fate smart working?</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio" name="smartWorking" value="si"
+                        checked={form.smartWorking === 'si'}
+                        onChange={() => setForm({ ...form, smartWorking: 'si' })}
+                        className="accent-blue"
+                      />
+                      <span className="text-sm text-gray-700">Sì</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio" name="smartWorking" value="no"
+                        checked={form.smartWorking === 'no'}
+                        onChange={() => setForm({ ...form, smartWorking: 'no' })}
+                        className="accent-blue"
+                      />
+                      <span className="text-sm text-gray-700">No</span>
+                    </label>
+                    {form.smartWorking === 'si' && (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={form.smartWorkingDays}
+                          onChange={(e) => setForm({ ...form, smartWorkingDays: e.target.value })}
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue bg-white"
+                        >
+                          <option value="">Quanti gg?</option>
+                          <option value="1">1 gg/settimana</option>
+                          <option value="2">2 gg/settimana</option>
+                          <option value="3">3 gg/settimana</option>
+                          <option value="4">4 gg/settimana</option>
+                          <option value="5">5 gg/settimana</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Prodotto attuale */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Che prodotto/servizio state usando al momento?</label>
+                  <input
+                    type="text"
+                    value={form.currentProduct}
+                    onChange={(e) => setForm({ ...form, currentProduct: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
+                    placeholder="Es. macchina Nespresso, boccioni Culligan, fornitore attuale..."
+                  />
+                </div>
+
+                {/* Criticità */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quali criticità riscontrate?</label>
+                  <textarea
+                    rows={2}
+                    value={form.issues}
+                    onChange={(e) => setForm({ ...form, issues: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
+                    placeholder="Es. consegne in ritardo, qualità caffè scadente, prezzi alti, mancanza assistenza..."
+                  />
                 </div>
 
                 <div>
