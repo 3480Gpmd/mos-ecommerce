@@ -43,6 +43,7 @@ export function CatalogoContent() {
   const router = useRouter();
   const [data, setData] = useState<ProductsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
 
@@ -70,6 +71,7 @@ export function CatalogoContent() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (group) params.set('group', group);
@@ -84,9 +86,16 @@ export function CatalogoContent() {
     try {
       const res = await fetch(`/api/products?${params}`);
       const json = await res.json();
-      setData(json);
+      if (!res.ok || !json?.products || !json?.pagination) {
+        setData(null);
+        setError(json?.error || 'Errore caricamento prodotti');
+        return;
+      }
+      setData(json as ProductsResponse);
     } catch (err) {
       console.error('Errore caricamento prodotti:', err);
+      setData(null);
+      setError('Errore di rete. Riprova più tardi.');
     } finally {
       setLoading(false);
     }
@@ -118,7 +127,7 @@ export function CatalogoContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <PageTitle
-          subtitle={data ? `${data.pagination.total} prodotti trovati` : undefined}
+          subtitle={data?.pagination ? `${data.pagination.total} prodotti trovati` : undefined}
         >
           {q
             ? `Risultati per "${q}"`
@@ -268,6 +277,17 @@ export function CatalogoContent() {
               {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="bg-gray-100 rounded-xl animate-pulse aspect-[3/4]" />
               ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <p className="text-mos-red font-semibold text-lg">Impossibile caricare il catalogo</p>
+              <p className="text-gray-500 text-sm mt-2">{error}</p>
+              <button
+                onClick={() => fetchProducts()}
+                className="mt-4 inline-block bg-mos-red text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-mos-red-hover transition-colors"
+              >
+                Riprova
+              </button>
             </div>
           ) : data && data.products.length > 0 ? (
             <>
