@@ -90,6 +90,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error('🔴 GET /api/products error:', err);
-    return NextResponse.json({ error: 'Errore server' }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: 'Errore server', detail: message }, { status: 500 });
   }
 }
