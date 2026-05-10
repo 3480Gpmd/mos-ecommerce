@@ -29,7 +29,7 @@ export async function GET() {
       WHERE table_schema = 'public'
       ORDER BY table_name
     `);
-    result.tables = (rows as Array<{ table_name: string }>).map(r => r.table_name);
+    result.tables = (rows as unknown as Array<{ table_name: string }>).map(r => r.table_name);
   } catch (e: unknown) {
     const err = e as Error & { cause?: Error & { code?: string } };
     result.tables = 'FAIL: ' + err.message;
@@ -40,7 +40,7 @@ export async function GET() {
   // Test 3: count products
   try {
     const rows = await db.execute(sql`SELECT COUNT(*) as n FROM products`);
-    result.products_count = (rows as Array<{ n: string }>)[0]?.n;
+    result.products_count = (rows as unknown as Array<{ n: string }>)[0]?.n;
   } catch (e: unknown) {
     const err = e as Error & { cause?: Error & { code?: string; detail?: string } };
     result.products_count = 'FAIL';
